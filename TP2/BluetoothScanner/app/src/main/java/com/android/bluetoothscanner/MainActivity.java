@@ -11,7 +11,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 
 
-
+import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -24,6 +24,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import java.util.Set;
@@ -49,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this,
                         new String[] { android.Manifest.permission.BLUETOOTH_CONNECT }, REQUEST_BLUETOOTH_CONNECT);
             }
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PackageManager.PERMISSION_GRANTED);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PackageManager.PERMISSION_GRANTED);
+
 
             /*
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
@@ -77,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
                         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                         // Add the name and address to an array adapter to show in a ListView
                         Log.i("device-test-broadcast", device.getName() + " " + device.getAddress());
-
                     }
                 }
             };
@@ -86,6 +90,18 @@ public class MainActivity extends AppCompatActivity {
             registerReceiver(mReceiver, filter);
 
         }
+
+        Button mPlayButton = findViewById(R.id.main_activity_play_button);
+
+        // connecting play button to puzzle activity
+        mPlayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // start puzzle activity
+                Intent puzzleActivityIntent = new Intent(MainActivity.this, MapsActivity.class);
+                startActivity(puzzleActivityIntent);
+            }
+        });
 
     }
 
