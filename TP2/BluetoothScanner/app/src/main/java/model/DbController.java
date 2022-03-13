@@ -28,7 +28,7 @@ public class DbController {
         this.context = context;
     }
 
-    private void setDevicesLocations(JSONArray arr) {
+    public void setDevicesLocations(JSONObject arr) {
         try {
             this.data.put("devices_locations", arr);
 
@@ -64,21 +64,21 @@ public class DbController {
                 is.close();
                 this.data = new JSONObject(new String(buffer, "UTF-8"));
             } else{
-                this.data.put("devices_locations", new JSONArray());
+                this.data.put("devices_locations", new JSONObject());
             }
         } catch (IOException | JSONException ex) {
             ex.printStackTrace();
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public JSONArray getDevicesLocations(){
+    public JSONObject getDevicesLocations(){
         readDataFromDB();
         try {
-            return (JSONArray)(this.data.get("devices_locations"));
+            return (JSONObject) (this.data.get("devices_locations"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return new JSONArray();
+        return new JSONObject();
     }
 
 }

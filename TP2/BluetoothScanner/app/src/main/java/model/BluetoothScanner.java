@@ -16,16 +16,25 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.android.bluetoothscanner.MapsActivity;
+import com.google.android.gms.maps.model.LatLng;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class BluetoothScanner {
     private final Context context;
     private BluetoothAdapter bluetoothAdapter;
     private static final int REQUEST_BLUETOOTH_CONNECT = 1;
+    private final JSONObject detectedDevices;
 
     public BluetoothScanner(Context context) {
         this.context = context;
+        this.detectedDevices = new JSONObject();
     }
 
-    public void scan() {
+    public void scan( LatLng latLng) {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             CharSequence text = "Device doesn't support Bluetooth";
@@ -62,6 +71,17 @@ public class BluetoothScanner {
                         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                         // Add the name and address to an array adapter to show in a ListView
                         Log.i("device-test-broadcast", device.getName() + " " + device.getAddress());
+                        JSONObject deviceInfo = new JSONObject();
+                        try {
+                            deviceInfo.put("name", device.getName());
+                            deviceInfo.put("class", device.getClass());
+                            deviceInfo.put("type", device.getType());
+                            deviceInfo.put("latLng", latLng);
+                            detectedDevices.put((String)(device.getAddress()),deviceInfo);
+                            ((MapsActivity)context).pinDevicesToMap(detectedDevices);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             };
@@ -76,4 +96,8 @@ public class BluetoothScanner {
     /*private void askForPermissions(){
 
     }*/
+
+    public JSONObject getDetectedDevices() {
+        return detectedDevices;
+    }
 }

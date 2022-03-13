@@ -9,8 +9,10 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -26,7 +28,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import model.BluetoothScanner;
+import model.DbController;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -38,10 +48,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final long MIN_TIME = 1000; // 1 second
     private final long MIN_DIST = 5; // 5 Meters
 
-    private LatLng latLng;
-
     private Marker myPositionMarker;
+    private JSONObject devicesMarkers;
+    private JSONObject allDevices;
     private BluetoothScanner bluetoothScanner;
+     private DbController dbController;
 
 
 
@@ -54,6 +65,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         bluetoothScanner = new BluetoothScanner(this);
+        dbController = new DbController(this);
+        devicesMarkers = new JSONObject();
+        allDevices = new JSONObject();
     }
     /**
      * Manipulates the map once available.
@@ -64,6 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -72,21 +87,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //LatLng sydney = new LatLng(-34, 151);
         //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-
+        JSONObject newDevices = dbController.getDevicesLocations();
+        pinDevicesToMap(newDevices);
+        
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
 
                 try {
-                    latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                     if (myPositionMarker != null){
                         myPositionMarker.remove();
                     }
-                    myPositionMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("My Position").icon(BitmapFromVector(getApplicationContext(), R.drawable.ic_pushpin_svgrepo_com)));
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
-                    bluetoothScanner.scan();
+                    myPositionMarker = addMarker("My Position", latLng, R.drawable.ic_standing_up_man_svgrepo_com);
 
+
+
+
+
+
+                    bluetoothScanner.scan(latLng);
+                    pinDevicesToMap(bluetoothScanner.getDetectedDevices());
                 }
                 catch (SecurityException e){
                     e.printStackTrace();
@@ -123,6 +145,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    public void pinDevicesToMap(JSONObject devices) {
+        Iterator<String> keys = devices.keys();
+
+        while(keys.hasNext()) {
+            String key = keys.next();
+            try {
+                JSONObject obj = (JSONObject) devices.get(key);
+                //String address = (String) obj.get("address");
+                String title = null;
+                if (devicesMarkers.has(key)){
+                    Marker oldMarker = (Marker) devicesMarkers.get(key);
+                    title = oldMarker.getTitle();
+                    //remove marker from map
+                    oldMarker.remove();
+                    //remove marker from list of markers
+                    devicesMarkers.remove(key);
+                    allDevices.remove(key);
+                } else{
+                    title = "Device" + Integer.toString( devicesMarkers.length()+1);
+                }
+                LatLng latLng = null;
+                if(obj.get("latLng") instanceof String){
+                    String[] strArray = ((String) obj.get("latLng")).split(" ");
+                    strArray[1] = (strArray[1]).substring(1,strArray[1].length()-1);
+                    String[] latlong = strArray[1].split(",");
+                    double latitude = Double.parseDouble(latlong[0]);
+                    double longitude = Double.parseDouble(latlong[1]);
+                    latLng = new LatLng(latitude, longitude);
+                } else {
+                    latLng =(LatLng) obj.get("latLng");
+                }
+                Marker marker = addMarker(title, latLng, R.drawable.ic_pushpin_svgrepo_com);
+                //marker.setTag(obj.get("address"));
+                devicesMarkers.put(key, marker);
+                allDevices.put(key, obj);
+                dbController.setDevicesLocations(allDevices);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     private BitmapDescriptor BitmapFromVector(Context context, int vectorResId) {
         // below line is use to generate a drawable.
@@ -144,5 +208,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // after generating our bitmap we are returning our bitmap.
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    public Marker addMarker(String title, LatLng latLng, int icon){
+        Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).title(title).icon(BitmapFromVector(getApplicationContext(), icon)));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        return marker;
     }
 }
