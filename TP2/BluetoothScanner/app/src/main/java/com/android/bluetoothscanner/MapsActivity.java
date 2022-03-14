@@ -13,6 +13,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
@@ -40,6 +41,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import model.BluetoothScanner;
@@ -154,6 +156,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
+                
+                if(marker.getTitle().equals("My Position")){
+                    return false;
+                }
 
                 if (mPopupWindow != null) {
                     mPopupWindow.dismiss();
@@ -168,6 +174,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 TextView tvCuerpo = (TextView) viewContainer.findViewById(R.id.tvCuerpo);
                 Button directions_button = (Button) viewContainer.findViewById(R.id.direction_buttons);
                 Button favourites_button = (Button) viewContainer.findViewById(R.id.favourites_button);
+
+                if (dbController.getFavourites().has((String) marker.getTag())){
+                    favourites_button.setText("Retirer des favoris");
+                } else {
+                    favourites_button.setText("Ajouter aux favoris");
+                }
+
+
+
                 Button share_button = (Button) viewContainer.findViewById(R.id.share_button);
                 tvTitulo.setText(marker.getTitle());
                 tvCuerpo.setVisibility(View.GONE);
@@ -215,7 +230,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     @Override
                     public void onClick(View v) {
-                        addFavourites(marker);
+                        addRemoveFavourites(favourites_button, marker);
                     }
                 });
 
@@ -229,7 +244,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     //TODO
-    private void addFavourites(Marker marker) {
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void addRemoveFavourites(Button button,Marker marker) {
+        JSONObject arr = dbController.getFavourites();
+        if (arr.has((String)marker.getTag())){
+            arr.remove((String)marker.getTag());
+            button.setText("Ajouter aux favoris");
+        } else {
+            try{
+                arr.put((String)marker.getTag(),true);
+                button.setText("Retirer des favoris");
+            } catch (Exception e){
+                Log.e("Favourites", e.getMessage());
+            }
+
+        }
+        dbController.setFavourites(arr);
     }
 
     public void pinDevicesToMap(JSONObject devices) {
@@ -264,7 +294,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     latLng =(LatLng) obj.get("latLng");
                 }
                 Marker marker = addMarker(title, latLng, R.drawable.ic_pushpin_svgrepo_com);
-                //marker.setTag(obj.get("address"));
+                marker.setTag(key);
                 devicesMarkers.put(key, marker);
                 allDevices.put(key, obj);
                 dbController.setDevicesLocations(allDevices);

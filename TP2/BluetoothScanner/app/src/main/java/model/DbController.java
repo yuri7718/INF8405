@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class DbController {
 
@@ -31,6 +32,26 @@ public class DbController {
     public void setDevicesLocations(JSONObject arr) {
         try {
             this.data.put("devices_locations", arr);
+
+            // Convert JsonObject to String Format
+            String userString = this.data.toString();
+            // Define the File Path and its Name
+            File file = new File(context.getFilesDir(),"DB.json");
+            FileWriter fileWriter = new FileWriter(file);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            //save file
+            bufferedWriter.write(userString);
+            bufferedWriter.close();
+
+        } catch (IOException | JSONException ex) {
+            ex.printStackTrace();
+            return;
+        }
+    }
+
+    public void setFavourites(JSONObject arr) {
+        try {
+            this.data.put("favourites", arr);
 
             // Convert JsonObject to String Format
             String userString = this.data.toString();
@@ -65,6 +86,8 @@ public class DbController {
                 this.data = new JSONObject(new String(buffer, "UTF-8"));
             } else{
                 this.data.put("devices_locations", new JSONObject());
+                this.data.put("favourites", new JSONObject());
+
             }
         } catch (IOException | JSONException ex) {
             ex.printStackTrace();
@@ -75,6 +98,17 @@ public class DbController {
         readDataFromDB();
         try {
             return (JSONObject) (this.data.get("devices_locations"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return new JSONObject();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public JSONObject getFavourites(){
+        readDataFromDB();
+        try {
+            return (JSONObject) (this.data.get("favourites"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
