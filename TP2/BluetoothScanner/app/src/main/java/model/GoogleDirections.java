@@ -1,13 +1,12 @@
 package model;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,16 +14,21 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
-public class GoogleParser extends FileDownloader {
+public class GoogleDirections extends FileDownloader {
     private final Context context;
+    private final GoogleMap myMap;
     /** Distance covered. **/
     private int distance;
 
-    public GoogleParser(Context context) {
+    public GoogleDirections(Context context, GoogleMap myMap) {
         super(context);
         this.context = context;
+        this.myMap = myMap;
     }
 
     @Override
@@ -39,10 +43,9 @@ public class GoogleParser extends FileDownloader {
             byte[] buffer = new byte[size];
             is.read(buffer);
             is.close();
-            //data = new JSONObject(new String(buffer, "UTF-8"));
-            //String res = (String)(((JSONObject)((JSONObject)(((JSONArray)(data.get("routes"))).get(0))).get("overview_polyline")).get("points"));
             String res = new String(buffer, "UTF-8");
-            parse(res);
+            Route route = parse(res);
+            drawPath(route.getPoints());
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -90,8 +93,8 @@ public class GoogleParser extends FileDownloader {
                 final JSONObject step = steps.getJSONObject(i);
                 //Get the start position for this step and set it on the segment
                 final JSONObject start = step.getJSONObject("start_location");
-                final LatLng position = new LatLng((int) (start.getDouble("lat")*1E6),
-                        (int) (start.getDouble("lng")*1E6));
+                final LatLng position = new LatLng((double) (start.getDouble("lat")),
+                        (double) (start.getDouble("lng")));
                 segment.setPoint(position);
                 //Set the length of this segment in metres
                 final int length = step.getJSONObject("distance").getInt("value");
@@ -110,33 +113,6 @@ public class GoogleParser extends FileDownloader {
             Log.e( "Google Parser",  "Google JSON Parser");
         }
         return route;
-    }
-
-    /**
-     * Convert an inputstream to a string.
-     * @param input inputstream to convert.
-     * @return a String of the inputstream.
-     */
-
-    private static String convertStreamToString(final InputStream input) {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-        final StringBuilder sBuf = new StringBuilder();
-
-        String line = null;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sBuf.append(line);
-            }
-        } catch (IOException e) {
-            Log.e( "Google Parser", "Google parser, stream2string");
-        } finally {
-            try {
-                input.close();
-            } catch (IOException e) {
-                Log.e( "Google Parser", "Google parser, stream2string");
-            }
-        }
-        return sBuf.toString();
     }
 
     /**
@@ -175,9 +151,24 @@ public class GoogleParser extends FileDownloader {
             lng += dlng;
 
             decoded.add(new LatLng(
-                    (int) (lat*1E6 / 1E5), (int) (lng*1E6 / 1E5)));
+                    (double) (lat / 1E5), (double) (lng / 1E5)));
         }
 
         return decoded;
+    }
+
+    public void drawPath(List<LatLng> list) {
+        try {
+
+            PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
+            for (int z = 0; z < list.size(); z++) {
+                LatLng point = list.get(z);
+                options.add(point);
+            }
+            Polyline line = myMap.addPolyline(options);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,24 +1,18 @@
 package com.android.bluetoothscanner;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -30,35 +24,15 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 
-import com.google.android.gms.maps.model.PolylineOptions;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Scanner;
 
 import model.BluetoothScanner;
 import model.DbController;
-import model.GoogleParser;
+import model.GoogleDirections;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -104,10 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-// Add a marker in Sydney and move the camera
-        //LatLng sydney = new LatLng(-34, 151);
-        //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
         JSONObject newDevices = dbController.getDevicesLocations();
         pinDevicesToMap(newDevices);
         
@@ -122,11 +93,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
 
                     myPositionMarker = addMarker("My Position", latLng, R.drawable.ic_standing_up_man_svgrepo_com);
-
-
-
-
-
 
                     bluetoothScanner.scan(latLng);
                     pinDevicesToMap(bluetoothScanner.getDetectedDevices());
@@ -234,11 +200,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public Marker addMarker(String title, LatLng latLng, int icon){
         Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).title(title).icon(BitmapFromVector(getApplicationContext(), icon)));
         if (title.equals("My Position")){
-            myPositionMarker = marker;
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
-            LatLng newLatlng = new LatLng(45.4953933,-73.5727794);
-            Marker newMarker = mMap.addMarker(new MarkerOptions().position(newLatlng).title(title).icon(BitmapFromVector(getApplicationContext(), icon)));
-            getDirections(newMarker);
         }
         return marker;
     }
@@ -259,7 +221,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getDirections(Marker marker){
-        new GoogleParser(this).execute(getDirectionsUrl(myPositionMarker.getPosition(), marker.getPosition()));
+        new GoogleDirections(this, mMap).execute(getDirectionsUrl(myPositionMarker.getPosition(), marker.getPosition()));
     }
 
 }
