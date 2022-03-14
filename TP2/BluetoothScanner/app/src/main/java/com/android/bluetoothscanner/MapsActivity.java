@@ -1,15 +1,26 @@
 package com.android.bluetoothscanner;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Display;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.ViewFlipper;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
@@ -21,6 +32,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -48,8 +60,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private JSONObject devicesMarkers;
     private JSONObject allDevices;
     private BluetoothScanner bluetoothScanner;
-     private DbController dbController;
+    private DbController dbController;
 
+    //popup materials
+    private Marker mMarker;
+    private PopupWindow mPopupWindow;
+    private int mWidth;
+    private int mHeight;
+    private View popupView;
+    private GoogleDirections mGoogleDirections;
 
 
     @Override
@@ -64,6 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         dbController = new DbController(this);
         devicesMarkers = new JSONObject();
         allDevices = new JSONObject();
+        mGoogleDirections = null;
     }
     /**
      * Manipulates the map once available.
@@ -130,6 +150,86 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         catch (SecurityException e){
             e.printStackTrace();
         }
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+
+                if (mPopupWindow != null) {
+                    mPopupWindow.dismiss();
+                }
+
+                //popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);;// inflate our view here
+
+                popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);
+                ViewFlipper markerInfoContainer = (ViewFlipper)popupView.findViewById(R.id.markerInfoContainer);
+                View viewContainer = getLayoutInflater().inflate(R.layout.default_marker_info_layout, null);
+                TextView tvTitulo = (TextView) viewContainer.findViewById(R.id.tvTitulo);
+                TextView tvCuerpo = (TextView) viewContainer.findViewById(R.id.tvCuerpo);
+                Button directions_button = (Button) viewContainer.findViewById(R.id.direction_buttons);
+                Button favourites_button = (Button) viewContainer.findViewById(R.id.favourites_button);
+                Button share_button = (Button) viewContainer.findViewById(R.id.share_button);
+                tvTitulo.setText(marker.getTitle());
+                tvCuerpo.setVisibility(View.GONE);
+
+                markerInfoContainer.addView(viewContainer);
+
+
+
+                mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                mPopupWindow.setBackgroundDrawable(new BitmapDrawable());
+                mPopupWindow.setOutsideTouchable(true);
+                Display display = getWindowManager().getDefaultDisplay();
+                Point size = new Point();
+                display.getSize(size);
+                popupView.measure(size.x, size.y);
+
+
+                mWidth = popupView.getMeasuredWidth();
+                mHeight = popupView.getMeasuredHeight();
+                mMarker = marker;
+/*
+                PopupWindow popupWindow = new PopupWindow(mainView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                popupWindow.showAtLocation(findViewById(R.id.map), Gravity.CENTER_HORIZONTAL, 0, 0); //map is the fragment on the activity layout where I put the map
+*/
+                updatePopup();
+
+
+                directions_button.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        getDirections(marker);
+                    }
+                });
+
+                share_button.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        share(marker);
+                    }
+                });
+
+                favourites_button.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        addFavourites(marker);
+                    }
+                });
+
+                return true;
+            }
+        });
+    }
+
+    //TODO
+    private void share(Marker marker) {
+    }
+
+    //TODO
+    private void addFavourites(Marker marker) {
     }
 
     public void pinDevicesToMap(JSONObject devices) {
@@ -221,7 +321,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getDirections(Marker marker){
-        new GoogleDirections(this, mMap).execute(getDirectionsUrl(myPositionMarker.getPosition(), marker.getPosition()));
+        if (mGoogleDirections != null){
+            mGoogleDirections.reset();
+        }
+        mGoogleDirections = new GoogleDirections(this, mMap, myPositionMarker.getPosition(), marker.getPosition());
+        mGoogleDirections.execute(getDirectionsUrl(myPositionMarker.getPosition(), marker.getPosition()));
     }
+
+    private void updatePopup() {
+        if (mMarker != null && mPopupWindow != null) {
+            // marker is visible
+            if (mMap.getProjection().getVisibleRegion().latLngBounds.contains(mMarker.getPosition())) {
+                if (!mPopupWindow.isShowing()) {
+                    mPopupWindow.showAtLocation(popupView, Gravity.NO_GRAVITY, 0, 0);
+                }
+                Point p = mMap.getProjection().toScreenLocation(mMarker.getPosition());
+                mPopupWindow.update(p.x - mWidth / 2, p.y - mHeight + 100, -1, -1);
+            } else { // marker outside screen
+                mPopupWindow.dismiss();
+            }
+        }
+    }
+
+
 
 }

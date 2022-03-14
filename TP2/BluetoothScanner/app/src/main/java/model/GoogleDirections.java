@@ -24,11 +24,16 @@ public class GoogleDirections extends FileDownloader {
     private final GoogleMap myMap;
     /** Distance covered. **/
     private int distance;
+    private Polyline mLine;
+    private LatLng mSource;
+    private LatLng mDestination;
 
-    public GoogleDirections(Context context, GoogleMap myMap) {
+    public GoogleDirections(Context context, GoogleMap myMap, LatLng source, LatLng destination) {
         super(context);
         this.context = context;
         this.myMap = myMap;
+        mSource = source;
+        mDestination = destination;
     }
 
     @Override
@@ -46,6 +51,8 @@ public class GoogleDirections extends FileDownloader {
             String res = new String(buffer, "UTF-8");
             Route route = parse(res);
             drawPath(route.getPoints());
+            mProgress.setProgress(100);
+            mProgress.dismiss();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -161,14 +168,23 @@ public class GoogleDirections extends FileDownloader {
         try {
 
             PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
+            options.add(mSource);
             for (int z = 0; z < list.size(); z++) {
                 LatLng point = list.get(z);
                 options.add(point);
             }
-            Polyline line = myMap.addPolyline(options);
+            options.add(mDestination);
+
+            mLine = myMap.addPolyline(options);
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void reset() {
+        if (mLine != null){
+            mLine.remove();
         }
     }
 }

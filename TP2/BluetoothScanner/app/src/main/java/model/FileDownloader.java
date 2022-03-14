@@ -1,8 +1,13 @@
 package model;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+
+import com.android.bluetoothscanner.MapsActivity;
+import com.android.bluetoothscanner.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,19 +27,27 @@ import java.util.Scanner;
 class FileDownloader extends AsyncTask<String, String, String> {
 
     private final Context context;
+    protected ProgressDialog mProgress;
+
 
     /**
      * Before starting background thread Show Progress Bar Dialog
      * */
     FileDownloader(Context context){
         this.context = context;
+        mProgress = new ProgressDialog(context);
     }
 
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        //showDialog(progress_bar_type);
+        mProgress.setMessage("Getting Directions :) ");
+        mProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgress.setIndeterminate(true);
+        mProgress.setProgress(0);
+        mProgress.setCancelable(false);
+        mProgress.show();
     }
 
     /**

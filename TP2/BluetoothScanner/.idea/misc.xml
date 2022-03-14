@@ -3,13 +3,8 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/abdel/OneDrive/Desktop/College/2M/INF8405/INF8405/TP2/BluetoothScanner/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.191" />
-        <entry key="..\:/Users/abdel/OneDrive/Desktop/College/2M/INF8405/INF8405/TP2/BluetoothScanner/app/src/main/res/drawable/ic_launcher_background.xml" value="0.191" />
-        <entry key="..\:/Users/abdel/OneDrive/Desktop/College/2M/INF8405/INF8405/TP2/BluetoothScanner/app/src/main/res/drawable/ic_pushpin_svgrepo_com.xml" value="0.196" />
-        <entry key="..\:/Users/abdel/OneDrive/Desktop/College/2M/INF8405/INF8405/TP2/BluetoothScanner/app/src/main/res/drawable/ic_standing_up_man_svgrepo_com.xml" value="0.196" />
-        <entry key="..\:/Users/abdel/OneDrive/Desktop/College/2M/INF8405/INF8405/TP2/BluetoothScanner/app/src/main/res/layout/activity_main.xml" value="0.28940217391304346" />
-        <entry key="..\:/Users/abdel/OneDrive/Desktop/College/2M/INF8405/INF8405/TP2/BluetoothScanner/app/src/main/res/layout/activity_maps.xml" value="0.28940217391304346" />
-        <entry key="..\:/Users/abdel/OneDrive/Desktop/College/2M/INF8405/INF8405/TP2/BluetoothScanner/app/src/main/res/layout/fragment_map.xml" value="0.18802083333333333" />
+        <entry key="app/src/main/res/drawable/default_marker_info_window.xml" value="0.1905" />
+        <entry key="app/src/main/res/layout/default_marker_info_layout.xml" value="0.12771739130434784" />
       </map>
     </option>
   </component>
