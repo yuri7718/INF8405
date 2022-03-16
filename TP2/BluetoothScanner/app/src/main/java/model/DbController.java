@@ -2,6 +2,7 @@ package model;
 
 import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
@@ -76,7 +77,10 @@ public class DbController {
         try {
             InputStream is = null;
             //verify if its in cache
-            if (Files.exists(Paths.get(context.getFilesDir() + "/DB.json"))){
+            //Log.i("test-test", String.valueOf(Paths.get(context.getFilesDir() + "/DB.json")));
+            File file = new File(context.getFilesDir() + "/DB.json");
+            Log.i("test-test", String.valueOf(context.getFilesDir()));
+            if (file.exists()) {
                 is = new FileInputStream(context.getFilesDir() + "/DB.json");
                 //reading the file
                 int size = is.available();
