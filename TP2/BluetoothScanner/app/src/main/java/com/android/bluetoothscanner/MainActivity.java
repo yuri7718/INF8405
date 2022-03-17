@@ -35,26 +35,25 @@ import model.BluetoothScanner;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_ACCESS_COARSE_LOCATION = 2;
+    private static final int TIME_OUT = 3000; // wait 3s before showing the main view of the application
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button mPlayButton = findViewById(R.id.main_activity_play_button);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestStoragePermission();
         }
 
-        // connecting play button to puzzle activity
-        mPlayButton.setOnClickListener(new View.OnClickListener() {
+        new Handler().postDelayed(new Runnable() {
             @Override
-            public void onClick(View view) {
-                // start puzzle activity
-                Intent puzzleActivityIntent = new Intent(MainActivity.this, MapsActivity.class);
-                startActivity(puzzleActivityIntent);
+            public void run() {
+                Intent mapsActivityIntent = new Intent(MainActivity.this, MapsActivity.class);
+                startActivity(mapsActivityIntent);
             }
-        });
+        }, TIME_OUT);
+
 
     }
     private void requestStoragePermission() {
