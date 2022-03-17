@@ -18,7 +18,9 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
@@ -41,8 +43,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import model.BluetoothScanner;
 import model.DbController;
@@ -72,12 +76,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private View popupView;
     private GoogleDirections mGoogleDirections;
 
+    ListView deviceListView;
+    List list = new ArrayList();
+    ArrayAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-// Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+        deviceListView = (ListView) findViewById(R.id.device_list);
+        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, list);
+
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -269,7 +281,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             String key = keys.next();
             try {
                 JSONObject obj = (JSONObject) devices.get(key);
-                //String address = (String) obj.get("address");
+                String address = (String) obj.get("address");
+
                 String title = null;
                 if (devicesMarkers.has(key)){
                     Marker oldMarker = (Marker) devicesMarkers.get(key);
