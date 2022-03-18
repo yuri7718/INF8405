@@ -34,6 +34,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -105,6 +106,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleDirections mGoogleDirections;
 
+    private Button shareBtn;
+    private Button swapTheme;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -128,6 +132,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         bluetoothScanner.scan(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
 
         mGoogleDirections = null;
+
+        shareBtn = findViewById(R.id.share);
+        swapTheme = findViewById(R.id.swap_theme);
+
+        shareBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                share();
+            }
+        });
+
+        swapTheme.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
 
     }
 
@@ -158,6 +179,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 updateDevicesList();
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
+            }
+
+            @Override
+            public void onProviderEnabled(@NonNull String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(@NonNull String provider) {
+
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
             }
         };
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -191,12 +227,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
 
-                Button share_button = (Button) viewContainer.findViewById(R.id.share_button);
                 tvTitulo.setText(marker.getTitle());
                 tvCuerpo.setVisibility(View.GONE);
 
                 markerInfoContainer.addView(viewContainer);
-
 
 
                 mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -223,14 +257,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void onClick(View v) {
                         getDirections(marker);
-                    }
-                });
-
-                share_button.setOnClickListener(new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View v) {
-                        share(marker);
                     }
                 });
 
@@ -270,9 +296,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    //TODO
-    private void share(Marker marker) {
-    }
 
 
     private void addRemoveFavourites(Button button, Marker marker) {
@@ -334,6 +357,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return favorites;
     }
 
+    /**
+     *  Share all information stored in database
+     */
+    private void share() {
+        String msg = "";
+        Cursor cursor = db.readAllData();
+        while (cursor.moveToNext()) {
+            String addr = "MAC ADDRESS: " + cursor.getString(0) + "\n";
+            msg += addr;
+            String name = "DEVICE NAME: " + cursor.getString(1) + "\n";
+            msg += name;
+            String lat = "LAT: " + cursor.getDouble(2) + "\n";
+            msg += lat;
+            String lng = "LNG: " + cursor.getDouble(3) + "\n";
+            msg += lng;
+            String type = "TYPE: type" + cursor.getInt(4) + "\n";
+            msg += type;
+            String favorite = cursor.getInt(5) == 0 ? "false" : "true";
+            msg += "FAVORITE: " + favorite + "\n";
+            msg += "=============================\n";
+        }
+
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, msg);
+        sendIntent.setType("text/plain");
+
+        Intent sharedIntent = Intent.createChooser(sendIntent, null);
+        startActivity(sharedIntent);
+    }
 
     private BitmapDescriptor BitmapFromVector(Context context, int vectorResId) {
         // below line is use to generate a drawable.

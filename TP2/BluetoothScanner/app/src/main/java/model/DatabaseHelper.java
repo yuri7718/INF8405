@@ -4,18 +4,22 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 import android.widget.TableLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.File;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private Context context;
 
-    public static final String DATABASE_NAME = " BluetoothDevices.db";
+    public static final String DATABASE_NAME = "BluetoothDevices.db";
     public static final int DATABASE_VERSION = 1;
 
     private static final String TABLE_NAME = "detected_devices";
@@ -110,4 +114,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         int res = db.update(TABLE_NAME, cv, COLUMN_ADDRESS + "=?", new String[] {addr});
         return res > 0;
     }
+
+
 }
