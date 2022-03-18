@@ -97,12 +97,45 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
   
         darkModeToggle  = findViewById(R.id.darkModeToggle);
+
+        // managing app reopening case if the user applied dark mode before closure
+
+        SharedPreferences sharedPreferences = getSharedPreferences( "sharedPreferences", MODE_PRIVATE);
+        final SharedPreferences.Editor modeStatus = sharedPreferences.edit();
+        final boolean darkMode = sharedPreferences.getBoolean("darkMode", false);
+
+        if(darkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            darkModeToggle.setText("Enable Normal Mode");
+        }
+        else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            darkModeToggle.setText("Enable Dark Mode");
+
+        }
   
         darkModeToggle.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view)
                 {
-                    AppCompatDelegate.setDefaultNightMode( AppCompatDelegate.MODE_NIGHT_YES);
+                    if (darkMode) {
+                        // turn off dark mode and enable normal one
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                        // change darkMode verification boolean to false
+                        editor.putBoolean("darkMode", false);
+                        editor.apply();
+                        //change toggle button text
+                        darkModeToggle.setText("Enable Dark Mode")
+                    }
+                    else {
+                        // turn off normal mode and enable dark one
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                        // change darkMode verification boolean
+                        editor.putBoolean("darkMode", true);
+                        editor.apply();
+                        //change toggle button text
+                        darkModeToggle.setText("Enable Normal Mode")
+                    }
                 }
             });
     }
