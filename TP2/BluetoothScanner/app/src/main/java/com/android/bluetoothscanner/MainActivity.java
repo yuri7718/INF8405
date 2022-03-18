@@ -90,22 +90,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-     @Override
-    protected void onCreate( Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-  
-        darkModeToggle  = findViewById(R.id.darkModeToggle);
-  
-        darkModeToggle.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view)
-                {
-                    AppCompatDelegate.setDefaultNightMode( AppCompatDelegate.MODE_NIGHT_YES);
-                }
-            });
-    }
 }
 
 }
