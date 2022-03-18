@@ -112,7 +112,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         favorite = favorite == 0 ? 1: 0;    // toggle favorite value
         cv.put(COLUMN_FAVORITE, favorite);
         int res = db.update(TABLE_NAME, cv, COLUMN_ADDRESS + "=?", new String[] {addr});
-        return res > 0;
+        return favorite == 1;
     }
 
 

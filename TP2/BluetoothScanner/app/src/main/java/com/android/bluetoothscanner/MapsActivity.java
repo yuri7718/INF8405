@@ -266,7 +266,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     @Override
                     public void onClick(View v) {
-                        addRemoveFavourites(favourites_button, marker);
+                        boolean res = addRemoveFavourites(favourites_button, marker);
+                        if (res){
+                            favourites_button.setText(REMOVE_FROM_FAVORITES);
+                        } else {
+                            favourites_button.setText(ADD_TO_FAVORITES);
+                        }
                     }
                 });
 
@@ -300,8 +305,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-    private void addRemoveFavourites(Button button, Marker marker) {
-        boolean res = db.updateFavorite(marker.getTitle());
+    private boolean addRemoveFavourites(Button button, Marker marker) {
+        return db.updateFavorite(marker.getTitle());
     }
 
     /**
