@@ -1,18 +1,27 @@
 package com.android.bluetoothscanner;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+
 import android.location.Location;
+
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.nfc.cardemulation.HostNfcFService;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -26,8 +35,10 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
+
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -45,60 +56,81 @@ import org.json.JSONObject;
 
 import java.sql.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import model.BluetoothScanner;
+import model.DatabaseHelper;
 import model.DbController;
+import model.GPSTracker;
 import model.GoogleDirections;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
+    private GPSTracker gpsTracker;
+    private Location mLocation;
+
     private LocationListener locationListener;
     private LocationManager locationManager;
+    private static final long MIN_TIME = 5000; // 5s
+    private static final long MIN_DIST = 10;   // 10m
 
-    private final long MIN_TIME = 1000; // 1 second
-    private final long MIN_DIST = 5; // 5 Meters
-
-    private Marker myPositionMarker;
-    private JSONObject devicesMarkers;
-    private JSONObject allDevices;
     private BluetoothScanner bluetoothScanner;
-    private DbController dbController;
+    ListView deviceListView;
+    List<String> devicesList = new ArrayList<>();
+    Set<String> addressesSet = new HashSet<>();
+    ArrayAdapter adapter;
 
-    //popup materials
+    DatabaseHelper db;
+
+    private static final String MY_POSITION = "My Position";
+    private Marker myPositionMarker;
+
+    // popup materials
     private Marker mMarker;
     private PopupWindow mPopupWindow;
     private int mWidth;
     private int mHeight;
     private View popupView;
-    private GoogleDirections mGoogleDirections;
 
-    ListView deviceListView;
-    List list = new ArrayList();
-    ArrayAdapter adapter;
+    private static final String ADD_TO_FAVORITES = "Ajouter aux favoris";
+    private static final String REMOVE_FROM_FAVORITES = "Retirer des favoris";
+
+    private GoogleDirections mGoogleDirections;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        deviceListView = (ListView) findViewById(R.id.device_list);
-        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, list);
-
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        // get current location
+        gpsTracker = new GPSTracker(getApplicationContext());
+        mLocation = gpsTracker.getLocation();
+
+        // define deviceListView and adapter
+        deviceListView = (ListView) findViewById(R.id.device_list);
+        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, devicesList);
+
+        // initialize database
+        db = new DatabaseHelper(this);
+
         bluetoothScanner = new BluetoothScanner(this);
-        dbController = new DbController(this);
-        devicesMarkers = new JSONObject();
-        allDevices = new JSONObject();
+        bluetoothScanner.scan(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
+
         mGoogleDirections = null;
+
     }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -108,91 +140,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
 
-        JSONObject newDevices = dbController.getDevicesLocations();
-        pinDevicesToMap(newDevices);
-        
+        updateDevicesList();
+
+        LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+        myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
+
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-
-                try {
-                    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    if (myPositionMarker != null){
-                        myPositionMarker.remove();
-                    }
-
-                    myPositionMarker = addMarker("My Position", latLng, R.drawable.ic_standing_up_man_svgrepo_com);
-
-                    bluetoothScanner.scan(latLng);
-                    pinDevicesToMap(bluetoothScanner.getDetectedDevices());
-                }
-                catch (SecurityException e){
-                    e.printStackTrace();
-                }
-
-            }
-
-            @Override
-            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String s) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String s) {
-
+                updateDevicesList();
+                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
             }
         };
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DIST, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DIST, locationListener);
 
-        try {
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ) {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DIST, locationListener);
-            } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ) {
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DIST, locationListener);
-            }
-        }
-        catch (SecurityException e){
-            e.printStackTrace();
-        }
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
                 
-                if(marker.getTitle().equals("My Position")){
-                    return false;
-                }
+                if (marker.getTitle().equals(MY_POSITION)) return false;
 
                 if (mPopupWindow != null) {
                     mPopupWindow.dismiss();
                 }
 
-                //popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);;// inflate our view here
-
                 popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);
-                ViewFlipper markerInfoContainer = (ViewFlipper)popupView.findViewById(R.id.markerInfoContainer);
+                ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
                 View viewContainer = getLayoutInflater().inflate(R.layout.default_marker_info_layout, null);
                 TextView tvTitulo = (TextView) viewContainer.findViewById(R.id.tvTitulo);
                 TextView tvCuerpo = (TextView) viewContainer.findViewById(R.id.tvCuerpo);
                 Button directions_button = (Button) viewContainer.findViewById(R.id.direction_buttons);
                 Button favourites_button = (Button) viewContainer.findViewById(R.id.favourites_button);
 
-                if (dbController.getFavourites().has((String) marker.getTag())){
-                    favourites_button.setText("Retirer des favoris");
-                } else {
-                    favourites_button.setText("Ajouter aux favoris");
-                }
 
+                if (getFavorites().contains(marker.getTitle())){
+                    favourites_button.setText(REMOVE_FROM_FAVORITES);
+                } else {
+                    favourites_button.setText(ADD_TO_FAVORITES);
+                }
 
 
                 Button share_button = (Button) viewContainer.findViewById(R.id.share_button);
@@ -215,10 +211,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mWidth = popupView.getMeasuredWidth();
                 mHeight = popupView.getMeasuredHeight();
                 mMarker = marker;
-/*
-                PopupWindow popupWindow = new PopupWindow(mainView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                popupWindow.showAtLocation(findViewById(R.id.map), Gravity.CENTER_HORIZONTAL, 0, 0); //map is the fragment on the activity layout where I put the map
-*/
+
+                //PopupWindow popupWindow = new PopupWindow(mainView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                //popupWindow.showAtLocation(findViewById(R.id.map), Gravity.CENTER_HORIZONTAL, 0, 0); //map is the fragment on the activity layout where I put the map
+
                 updatePopup();
 
 
@@ -251,70 +247,91 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
+    /**
+     *
+     */
+    private void updateDevicesList() {
+        // get devices from database
+        Cursor cursor = db.readAllData();
+
+        while (cursor.moveToNext()) {
+            String addr = cursor.getString(0);
+            String name = cursor.getString(1);
+            if (!addressesSet.contains(addr)) {
+                addressesSet.add(addr);
+                if (name == null) {
+                    name = "Device " + addressesSet.size();
+                }
+                devicesList.add(name + "\n" + addr);
+            }
+        }
+        deviceListView.setAdapter(adapter);
+        pinDevicesToMap();
+
+    }
+
     //TODO
     private void share(Marker marker) {
     }
 
-    //TODO
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void addRemoveFavourites(Button button,Marker marker) {
-        JSONObject arr = dbController.getFavourites();
-        if (arr.has((String)marker.getTag())){
-            arr.remove((String)marker.getTag());
-            button.setText("Ajouter aux favoris");
-        } else {
-            try{
-                arr.put((String)marker.getTag(),true);
-                button.setText("Retirer des favoris");
-            } catch (Exception e){
-                Log.e("Favourites", e.getMessage());
-            }
 
-        }
-        dbController.setFavourites(arr);
+    private void addRemoveFavourites(Button button, Marker marker) {
+        boolean res = db.updateFavorite(marker.getTitle());
     }
 
-    public void pinDevicesToMap(JSONObject devices) {
-        Iterator<String> keys = devices.keys();
+    /**
+     * Plot detected devices
+     * myPositionMarker needs to be set manually after calling this method
+     */
+    public void pinDevicesToMap() {
 
-        while(keys.hasNext()) {
-            String key = keys.next();
-            try {
-                JSONObject obj = (JSONObject) devices.get(key);
-                String address = (String) obj.get("address");
+        mMap.clear();   // remove all the pins
 
-                String title = null;
-                if (devicesMarkers.has(key)){
-                    Marker oldMarker = (Marker) devicesMarkers.get(key);
-                    title = oldMarker.getTitle();
-                    //remove marker from map
-                    oldMarker.remove();
-                    //remove marker from list of markers
-                    devicesMarkers.remove(key);
-                    allDevices.remove(key);
-                } else{
-                    title = "Device" + Integer.toString( devicesMarkers.length()+1);
-                }
-                LatLng latLng = null;
-                if(obj.get("latLng") instanceof String){
-                    String[] strArray = ((String) obj.get("latLng")).split(" ");
-                    strArray[1] = (strArray[1]).substring(1,strArray[1].length()-1);
-                    String[] latlong = strArray[1].split(",");
-                    double latitude = Double.parseDouble(latlong[0]);
-                    double longitude = Double.parseDouble(latlong[1]);
-                    latLng = new LatLng(latitude, longitude);
-                } else {
-                    latLng =(LatLng) obj.get("latLng");
-                }
-                Marker marker = addMarker(title, latLng, R.drawable.ic_pushpin_svgrepo_com);
-                marker.setTag(key);
-                devicesMarkers.put(key, marker);
-                allDevices.put(key, obj);
-                dbController.setDevicesLocations(allDevices);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        // read data from database
+        Cursor cursor = db.readAllData();
+        while (cursor.moveToNext()) {
+            String addr = cursor.getString(0);
+
+            // latLng
+            double lat = cursor.getDouble(2);
+            double lng = cursor.getDouble(3);
+
+            LatLng latLng = addSpaceBetweenDetectedDevices(lat, lng);
+            addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com);
         }
+
+    }
+
+    /**
+     * Add space between pins since all the detected devices have the same lat and lng
+     */
+    private LatLng addSpaceBetweenDetectedDevices(double lat, double lng) {
+        double n;
+        double divisor = 100000.0;
+
+        // randomly generate a small number
+        Random rand = new Random();
+        n = rand.nextInt(10) / divisor;
+        lat = Math.random() < 0.5 ? lat - n : lat + n;
+
+        n = rand.nextInt(10) / divisor;
+        lng = Math.random() < 0.5 ? lng - n : lng + n;
+
+        return new LatLng(lat, lng);
+    }
+
+    /**
+     * Return mac addresses of all favorites devices
+     */
+    private List<String> getFavorites() {
+        List<String> favorites = new ArrayList<>();
+
+        Cursor cursor = db.readFavorites();
+        while (cursor.moveToNext()) {
+            favorites.add(cursor.getString(0));
+        }
+
+        return favorites;
     }
 
 
@@ -342,9 +359,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public Marker addMarker(String title, LatLng latLng, int icon){
         Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).title(title).icon(BitmapFromVector(getApplicationContext(), icon)));
+        /*
         if (title.equals("My Position")){
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
         }
+        */
         return marker;
     }
 
@@ -385,7 +404,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
     }
-
-
 
 }
