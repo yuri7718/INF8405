@@ -7,9 +7,4 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-
-    <!--Normal Mode-->
-    <color name="background">#XXXXX </color> <!--set your color according to your preferences-->
-    <color name="textColor">#XXXXX </color>  <!--set your color according to your preferences-->
-    
 </resources>
