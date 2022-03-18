@@ -35,6 +35,7 @@ import model.BluetoothScanner;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_ACCESS_COARSE_LOCATION = 2;
+    private Button darkModeToggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,5 +89,23 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+     @Override
+    protected void onCreate( Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+  
+        darkModeToggle  = findViewById(R.id.darkModeToggle);
+  
+        darkModeToggle.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view)
+                {
+                    AppCompatDelegate.setDefaultNightMode( AppCompatDelegate.MODE_NIGHT_YES);
+                }
+            });
+    }
+}
 
 }
