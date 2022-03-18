@@ -3,6 +3,7 @@ package com.android.bluetoothscanner;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Point;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
@@ -51,6 +53,8 @@ import model.GoogleDirections;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private Button darkModeToggle;
+
 
     private LocationListener locationListener;
     private LocationManager locationManager;
@@ -235,6 +239,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 });
 
                 return true;
+            }
+        });
+
+
+
+
+
+        darkModeToggle  = findViewById(R.id.darkModeToggle);
+
+        // managing app reopening case if the user applied dark mode before closure
+
+        SharedPreferences sharedPreferences = getSharedPreferences( "sharedPreferences", MODE_PRIVATE);
+        final SharedPreferences.Editor modeStatus = sharedPreferences.edit();
+        final boolean darkMode = sharedPreferences.getBoolean("darkMode", false);
+
+        if(darkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            darkModeToggle.setText("Enable Normal Mode");
+        }
+        else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            darkModeToggle.setText("Enable Dark Mode");
+
+        }
+
+        darkModeToggle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view)
+            {
+                if (darkMode) {
+                    // turn off dark mode and enable normal one
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    // change darkMode verification boolean to false
+                    modeStatus.putBoolean("darkMode", false);
+                    modeStatus.apply();
+                    //change toggle button text
+                    darkModeToggle.setText("Enable Dark Mode");
+                }
+                else {
+                    // turn off normal mode and enable dark one
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    // change darkMode verification boolean
+                    modeStatus.putBoolean("darkMode", true);
+                    modeStatus.apply();
+                    //change toggle button text
+                    darkModeToggle.setText("Enable Normal Mode");
+                }
             }
         });
     }

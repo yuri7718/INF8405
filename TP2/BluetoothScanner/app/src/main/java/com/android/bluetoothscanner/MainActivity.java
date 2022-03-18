@@ -35,7 +35,6 @@ import model.BluetoothScanner;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_ACCESS_COARSE_LOCATION = 2;
-    private Button darkModeToggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +88,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-}
 
 }
