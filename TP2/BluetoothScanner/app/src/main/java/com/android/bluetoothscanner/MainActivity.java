@@ -34,55 +34,66 @@ import model.BluetoothScanner;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_ACCESS_COARSE_LOCATION = 2;
+    private static final int REQUEST_ACCESS_FINE_LOCATION = 1;
+    private static final int TIME_OUT = 3000; // wait 3s before showing the main view of the application
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button mPlayButton = findViewById(R.id.main_activity_play_button);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestStoragePermission();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestLocationPermission();
+        } else {
+            startMapsActivity();
         }
 
-        // connecting play button to puzzle activity
-        mPlayButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // start puzzle activity
-                Intent puzzleActivityIntent = new Intent(MainActivity.this, MapsActivity.class);
-                startActivity(puzzleActivityIntent);
-            }
-        });
-
     }
-    private void requestStoragePermission() {
+
+    private void startMapsActivity() {
+        /**
+         * start MapsActivity
+         */
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent mapsActivityIntent = new Intent(MainActivity.this, MapsActivity.class);
+                startActivity(mapsActivityIntent);
+            }
+        }, TIME_OUT);
+    }
+
+
+    private void requestLocationPermission() {
+        /**
+         * Show dialog to request location permission
+         */
+
         new AlertDialog.Builder(this)
-                .setTitle("Permission needed")
-                .setMessage("This permission is needed")
-                .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        ActivityCompat.requestPermissions(MainActivity.this,
-                                new String[] {Manifest.permission.ACCESS_COARSE_LOCATION},
-                                REQUEST_ACCESS_COARSE_LOCATION);
-                    }
-                })
-                .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                }).create().show();
+            .setTitle("Permission needed")
+            .setMessage("This permission is needed")
+            .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_ACCESS_FINE_LOCATION);
+                }
+            })
+            .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            }).create().show();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_ACCESS_COARSE_LOCATION) {
+        if (requestCode == REQUEST_ACCESS_FINE_LOCATION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Permission GRANTED", Toast.LENGTH_SHORT).show();
+                startMapsActivity();
             } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
