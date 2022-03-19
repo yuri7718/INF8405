@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -30,9 +31,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.SearchView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 import android.widget.ViewFlipper;
 
 import androidx.annotation.NonNull;
@@ -117,6 +121,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_maps);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -154,7 +159,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
-
     }
 
     /**
@@ -482,15 +486,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     "  }\n" +
                     "]");
         MapStyleOptions light_style = new MapStyleOptions("[]");
+        LinearLayout buttons_background = findViewById(R.id.buttons_background);
 
         if(darkMode) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             mMap.setMapStyle(dark_style);
+            deviceListView.setBackgroundColor(Color.BLACK);
             //darkModeToggle.setText("Enable Normal Mode");
+            shareBtn.setBackgroundColor(Color.BLACK);
+            darkModeToggle.setBackgroundColor(Color.BLACK);
+            buttons_background.setBackgroundColor(Color.BLACK);
+
         }
         else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             mMap.setMapStyle(light_style);
+            deviceListView.setBackgroundColor(Color.WHITE);
+            shareBtn.setBackgroundColor(Color.WHITE);
+            darkModeToggle.setBackgroundColor(Color.WHITE);
+            buttons_background.setBackgroundColor(Color.WHITE);
+
+
+
             //darkModeToggle.setText("Enable Dark Mode");
 
         }
@@ -499,26 +514,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view)
             {
+                final boolean darkMode = sharedPreferences.getBoolean("darkMode", false);
                 if (darkMode) {
-                    // turn off dark mode and enable normal one
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                     // change darkMode verification boolean to false
                     modeStatus.putBoolean("darkMode", false);
                     modeStatus.apply();
-                    //change toggle button text
-                    //darkModeToggle.setText("Enable Dark Mode");
-                    mMap.setMapStyle(light_style);
                 }
                 else {
-                    // turn off normal mode and enable dark one
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                     // change darkMode verification boolean
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                     modeStatus.putBoolean("darkMode", true);
                     modeStatus.apply();
-                    mMap.setMapStyle(dark_style);
-
-                    //change toggle button text
-                    //darkModeToggle.setText("Enable Normal Mode");
                 }
             }
         });

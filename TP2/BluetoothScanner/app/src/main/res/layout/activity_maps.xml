@@ -3,7 +3,10 @@
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".MapsActivity"
+    android:background="@color/background"
+    >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -24,10 +27,11 @@
             android:layout_height="match_parent"
             android:layout_weight="7"
             android:orientation="vertical"
-            android:background="@color/background"
+            android:background="@color/purple_200"
             >
 
             <LinearLayout
+                android:id="@+id/buttons_background"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
