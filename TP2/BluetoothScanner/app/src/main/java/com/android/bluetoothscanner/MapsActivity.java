@@ -349,6 +349,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else {
             deviceListIcons.set(i, R.drawable.heart);
         }
+        adapter.notifyDataSetChanged();
         return db.updateFavorite(marker.getTitle());
     }
 
