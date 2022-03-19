@@ -114,6 +114,4 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         int res = db.update(TABLE_NAME, cv, COLUMN_ADDRESS + "=?", new String[] {addr});
         return favorite == 1;
     }
-
-
 }
