@@ -41,6 +41,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 
+import com.google.android.gms.common.util.ArrayUtils;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -68,6 +69,8 @@ import java.util.Set;
 import model.BluetoothScanner;
 import model.DatabaseHelper;
 import model.DbController;
+import model.DeviceAdapter;
+import model.DeviceViewHolder;
 import model.GPSTracker;
 import model.GoogleDirections;
 
@@ -85,11 +88,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private BluetoothScanner bluetoothScanner;
     ListView deviceListView;
-    List<String> devicesList = new ArrayList<>();
-    Set<String> addressesSet = new HashSet<>();
-    ArrayAdapter adapter;
+    List<String> deviceListMacAddresses = new ArrayList<>();
+    List<String> deviceListNames = new ArrayList<>();
+    List<Integer> deviceListIcons = new ArrayList<>();
+    List<String> deviceListTypes = new ArrayList<>();
+    List<String> deviceListPositions = new ArrayList<>();
+    Map<String, Integer> indices = new HashMap<>();
+    DeviceAdapter adapter;
 
     DatabaseHelper db;
+    Map<String, Map> deviceList = new HashMap<>();
 
     private static final String MY_POSITION = "My Position";
     private Marker myPositionMarker;
@@ -123,7 +131,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
-        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, devicesList);
+        adapter = new DeviceAdapter(this, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
+        deviceListView.setAdapter(adapter);
 
         // initialize database
         db = new DatabaseHelper(this);
@@ -167,7 +176,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap = googleMap;
 
-        updateDevicesList();
+        final Handler hanlder = new Handler();
+        hanlder.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateDevicesList();
+            }
+        }, MIN_TIME);
+
 
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
         myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
@@ -284,28 +300,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      *
      */
     private void updateDevicesList() {
+
         // get devices from database
         Cursor cursor = db.readAllData();
 
         while (cursor.moveToNext()) {
             String addr = cursor.getString(0);
             String name = cursor.getString(1);
-            if (!addressesSet.contains(addr)) {
-                addressesSet.add(addr);
-                if (name == null) {
-                    name = "Device " + addressesSet.size();
+            double lat = cursor.getDouble(2);
+            double lng = cursor.getDouble(3);
+            int type = cursor.getInt(4);
+            int favorite = cursor.getInt(5);
+
+            String pos = Double.toString(lat) + " " + Double.toString(lng);
+            if (indices.containsKey(addr)) {
+                int i = indices.get(addr);
+                deviceListPositions.set(i, pos);
+            } else {
+                // put <key, value> pair which is mac address and its index in the list
+                indices.put(addr, deviceListMacAddresses.size());
+
+                deviceListMacAddresses.add(addr);
+
+                name = name == null ? "Device" + deviceListMacAddresses.size() : name;
+                deviceListNames.add(name);
+
+                if (favorite == 0) {
+                    deviceListIcons.add(R.drawable.heart_grey);
+                } else {
+                    deviceListIcons.add(R.drawable.heart);
                 }
-                devicesList.add(name + "\n" + addr);
+
+                String deviceType = "type" + type;
+                deviceListTypes.add(deviceType);
+                deviceListPositions.add(pos);
             }
         }
-        deviceListView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
         pinDevicesToMap();
-
     }
 
 
 
     private boolean addRemoveFavourites(Button button, Marker marker) {
+        int i = indices.get(marker.getTitle());
+        if (deviceListIcons.get(i) == R.drawable.heart) {
+            deviceListIcons.set(i, R.drawable.heart_grey);
+        } else {
+            deviceListIcons.set(i, R.drawable.heart);
+        }
         return db.updateFavorite(marker.getTitle());
     }
 
