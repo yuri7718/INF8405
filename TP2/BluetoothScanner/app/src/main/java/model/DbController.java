@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -87,7 +88,7 @@ public class DbController {
                 byte[] buffer = new byte[size];
                 is.read(buffer);
                 is.close();
-                this.data = new JSONObject(new String(buffer, "UTF-8"));
+                this.data = new JSONObject(new String(buffer, StandardCharsets.UTF_8));
             } else{
                 this.data.put("devices_locations", new JSONObject());
                 this.data.put("favourites", new JSONObject());

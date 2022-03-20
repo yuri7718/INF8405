@@ -29,8 +29,8 @@ public class BluetoothScanner {
 
     private final Context context;
     private static final int REQUEST_BLUETOOTH_CONNECT = 1;
-    private BluetoothAdapter bluetoothAdapter;
-    private DatabaseHelper db;
+    private final BluetoothAdapter bluetoothAdapter;
+    private final DatabaseHelper db;
 
     public BluetoothScanner(Context context) {
         this.context = context;

@@ -10,7 +10,7 @@ import java.util.List;
 public class Route {
     private String name;
     private final List<LatLng> points;
-    private List<Segment> segments;
+    private final List<Segment> segments;
     private String copyright;
     private String warning;
     private String country;

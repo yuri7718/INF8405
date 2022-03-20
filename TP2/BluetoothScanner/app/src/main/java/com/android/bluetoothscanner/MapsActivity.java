@@ -332,6 +332,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Cursor cursor = db.readAllData();
         //iterate in the devices list
 
+
         while (cursor.moveToNext()) {
             String addr = cursor.getString(0);
             String name = cursor.getString(1);
@@ -340,10 +341,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             int type = cursor.getInt(4);
             int favorite = cursor.getInt(5);
 
-            String pos = Double.toString(lat) + " " + Double.toString(lng);
+            String pos = lat + " " + lng;
             if (indices.containsKey(addr)) {
                 int i = indices.get(addr);
                 deviceListPositions.set(i, pos);
+                if (favorite == 0) {
+                    deviceListIcons.set(i,R.drawable.white_heart);
+                } else {
+                    deviceListIcons.set(i,R.drawable.red_heart);
+                }
             } else {
                 // put <key, value> pair which is mac address and its index in the list
                 indices.put(addr, deviceListMacAddresses.size());
@@ -353,16 +359,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 name = name == null ? "Device" + deviceListMacAddresses.size() : name;
                 deviceListNames.add(name);
 
+                String deviceType = "type" + type;
+                deviceListTypes.add(deviceType);
+                deviceListPositions.add(pos);
                 if (favorite == 0) {
                     deviceListIcons.add(R.drawable.white_heart);
                 } else {
                     deviceListIcons.add(R.drawable.red_heart);
                 }
-
-                String deviceType = "type" + type;
-                deviceListTypes.add(deviceType);
-                deviceListPositions.add(pos);
             }
+
         }
         adapter.notifyDataSetChanged();
         //add markers to the map

@@ -8,6 +8,7 @@ import android.util.Log;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,8 +27,8 @@ public class GoogleDirections extends FileDownloader {
     /** Distance covered. **/
     private int distance;
     private Polyline mLine;
-    private LatLng mSource;
-    private LatLng mDestination;
+    private final LatLng mSource;
+    private final LatLng mDestination;
 
     public GoogleDirections(Context context, GoogleMap myMap, LatLng source, LatLng destination) {
         super(context);
@@ -49,7 +50,7 @@ public class GoogleDirections extends FileDownloader {
             byte[] buffer = new byte[size];
             is.read(buffer);
             is.close();
-            String res = new String(buffer, "UTF-8");
+            String res = new String(buffer, StandardCharsets.UTF_8);
             Route route = parse(res);
             drawPath(route.getPoints());
             mProgress.setProgress(100);

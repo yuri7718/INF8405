@@ -17,7 +17,7 @@ import java.io.File;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private Context context;
+    private final Context context;
 
     public static final String DATABASE_NAME = "BluetoothDevices.db";
     public static final int DATABASE_VERSION = 1;
