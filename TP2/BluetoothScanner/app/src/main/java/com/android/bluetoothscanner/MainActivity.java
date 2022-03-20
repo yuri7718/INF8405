@@ -3,8 +3,10 @@ package com.android.bluetoothscanner;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -28,11 +30,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+
 import java.util.Set;
 
 import model.BluetoothScanner;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private static final int REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int TIME_OUT = 3000; // wait 3s before showing the main view of the application
@@ -100,4 +105,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+        super.onPointerCaptureChanged(hasCapture);
+    }
 }

@@ -21,7 +21,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.BluetoothScanner">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -34,9 +35,10 @@
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"
-            android:screenOrientation="landscape">
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.BluetoothScanner">
         <intent-filter>
-            <action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" />
+            <action android:name="android.intent.action." /><category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
     </activity>
     </application>

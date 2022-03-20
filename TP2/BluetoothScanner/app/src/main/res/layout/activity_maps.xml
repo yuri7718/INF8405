@@ -3,11 +3,14 @@
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/mainBackground"
+    tools:context=".MapsActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/mainBackground"
         android:orientation="horizontal">
 
         <fragment
@@ -23,11 +26,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="7"
+            android:background="@color/mainBackground"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/mainBackground"
                 android:orientation="horizontal">
 
                 <Button
@@ -35,7 +40,9 @@
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:background="@color/mainBackground"
                     android:text="Partager"
+                    android:textColor="@color/mainText"
                     android:textSize="10sp" />
 
                 <Button
@@ -43,17 +50,21 @@
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:background="@color/mainBackground"
                     android:text="Swap Theme"
+                    android:textColor="@color/mainText"
                     android:textSize="10sp" />
             </LinearLayout>
 
             <ListView
                 android:id="@+id/device_list"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:background="@color/mainBackground"/>
         </LinearLayout>
 
     </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

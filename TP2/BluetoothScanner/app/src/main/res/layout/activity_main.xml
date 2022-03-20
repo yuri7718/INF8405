@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/mainBackground"
     tools:context=".MainActivity">
 
     <ImageView
@@ -20,8 +21,10 @@
         android:id="@+id/appName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/mainBackground"
         android:text="Bluetooth Scanner"
         android:textAlignment="center"
+        android:textColor="@color/mainText"
         android:textSize="34sp"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintEnd_toEndOf="parent"
@@ -42,43 +45,54 @@
             android:id="@+id/textView1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/mainBackground"
             android:text="Développeurs:"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="@color/mainText" />
 
         <TextView
             android:id="@+id/devName1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/mainBackground"
             android:text="Zobiri Abdelkader"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="@color/mainText" />
 
         <TextView
             android:id="@+id/devName2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/mainBackground"
             android:text="Boukerdoune Mehdi"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="@color/mainText" />
 
         <TextView
             android:id="@+id/devName3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/mainBackground"
             android:text="Jabir Yassine"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="@color/mainText" />
 
         <TextView
             android:id="@+id/devName4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/mainBackground"
             android:text="Xu Qiang"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="@color/mainText" />
 
         <TextView
             android:id="@+id/appVersion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/mainBackground"
             android:text="version 1.0"
-            android:textAlignment="textEnd" />
+            android:textAlignment="textEnd"
+            android:textColor="@color/mainText" />
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

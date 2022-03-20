@@ -36,6 +36,8 @@ import android.widget.ViewFlipper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -74,7 +76,7 @@ import model.DeviceViewHolder;
 import model.GPSTracker;
 import model.GoogleDirections;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
@@ -144,7 +146,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         shareBtn = findViewById(R.id.share);
         swapTheme = findViewById(R.id.swap_theme);
-
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -155,7 +156,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         swapTheme.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                finish();
             }
         });
 
