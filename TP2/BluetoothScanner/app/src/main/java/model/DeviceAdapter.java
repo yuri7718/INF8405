@@ -1,6 +1,8 @@
 package model;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -17,6 +20,7 @@ import com.android.bluetoothscanner.R;
 import java.util.List;
 
 public class DeviceAdapter extends ArrayAdapter<String> {
+    private final boolean isDarkMode;
     Context context;
 
     List<String> macAddresses;
@@ -25,11 +29,11 @@ public class DeviceAdapter extends ArrayAdapter<String> {
     List<String> types;
     List<String> positions;
 
-    public DeviceAdapter(Context context, List<String> macAddresses, List<String> deviceNames, List<Integer> icons,
+    public DeviceAdapter(Context context, boolean isDarkMode, List<String> macAddresses, List<String> deviceNames, List<Integer> icons,
                          List<String> types, List<String> positions) {
         super(context, R.layout.single_device, R.id.device_name, deviceNames);
         this.context = context;
-
+        this.isDarkMode = isDarkMode;
         this.macAddresses = macAddresses;
         this.deviceNames = deviceNames;
         this.icons = icons;
@@ -50,6 +54,15 @@ public class DeviceAdapter extends ArrayAdapter<String> {
             singleDevice.setTag(holder);
         } else {
             holder = (DeviceViewHolder) singleDevice.getTag();
+        }
+
+        if (isDarkMode){
+            holder.deviceName.setTextColor(Color.WHITE);
+            holder.macAddress.setTextColor(Color.WHITE);
+        } else{
+            holder.deviceName.setTextColor(Color.BLACK);
+            holder.macAddress.setTextColor(Color.BLACK);
+
         }
         holder.favoriteIcon.setImageResource(icons.get(position));
         holder.deviceName.setText(deviceNames.get(position));

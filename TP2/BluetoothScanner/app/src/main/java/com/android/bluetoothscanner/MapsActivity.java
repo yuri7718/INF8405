@@ -1,10 +1,9 @@
 package com.android.bluetoothscanner;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -17,17 +16,12 @@ import android.location.Location;
 
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.nfc.cardemulation.HostNfcFService;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.ContactsContract;
-import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.PopupWindow;
@@ -35,46 +29,35 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
 
 
-import com.google.android.gms.common.util.ArrayUtils;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import model.BluetoothScanner;
 import model.DatabaseHelper;
-import model.DbController;
 import model.DeviceAdapter;
-import model.DeviceViewHolder;
 import model.GPSTracker;
 import model.GoogleDirections;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
@@ -83,7 +66,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private LocationListener locationListener;
     private LocationManager locationManager;
-    private static final long MIN_TIME = 5000; // 5s
+    private static final long MIN_TIME = 1000; // 1s
     private static final long MIN_DIST = 10;   // 10m
 
     private BluetoothScanner bluetoothScanner;
@@ -116,10 +99,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private Button shareBtn;
     private Button swapTheme;
+    private boolean isDarkMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SharedPreferences sharedPreferences
+                = getSharedPreferences(
+                "sharedPrefs", MODE_PRIVATE);
+        this.isDarkMode
+                = sharedPreferences
+                .getBoolean(
+                        "isDarkModeOn", false);
         setContentView(R.layout.activity_maps);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -131,8 +122,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
-        adapter = new DeviceAdapter(this, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
+        adapter = new DeviceAdapter(this, isDarkMode, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
         deviceListView.setAdapter(adapter);
+
 
         // initialize database
         db = new DatabaseHelper(this);
@@ -144,7 +136,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         shareBtn = findViewById(R.id.share);
         swapTheme = findViewById(R.id.swap_theme);
-
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -155,7 +146,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         swapTheme.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                // Saving state of our app
+                // using SharedPreferences
+                SharedPreferences sharedPreferences
+                        = getSharedPreferences(
+                        "sharedPrefs", MODE_PRIVATE);
+                final SharedPreferences.Editor editor
+                        = sharedPreferences.edit();
+                final boolean isDarkModeOn
+                        = sharedPreferences
+                        .getBoolean(
+                                "isDarkModeOn", false);
+                if(isDarkModeOn){
+                    editor.putBoolean(
+                            "isDarkModeOn", false);
+                    editor.apply();
+                    AppCompatDelegate
+                            .setDefaultNightMode(
+                                    AppCompatDelegate
+                                            .MODE_NIGHT_NO);
+                } else {
+                    editor.putBoolean(
+                            "isDarkModeOn", true);
+                    editor.apply();
+                    AppCompatDelegate
+                            .setDefaultNightMode(
+                                    AppCompatDelegate
+                                            .MODE_NIGHT_YES);
+                }
             }
         });
 
@@ -173,8 +191,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-
         mMap = googleMap;
+        mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
 
         final Handler hanlder = new Handler();
         hanlder.postDelayed(new Runnable() {
@@ -186,6 +204,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+        if(myPositionMarker!= null){
+            myPositionMarker.remove();
+        }
         myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
 
@@ -194,6 +215,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onLocationChanged(Location location) {
                 updateDevicesList();
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                if(myPositionMarker!= null){
+                    myPositionMarker.remove();
+                }
                 myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
             }
 
@@ -301,7 +325,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void updateDevicesList() {
 
-        // get devices from database
         Cursor cursor = db.readAllData();
 
         while (cursor.moveToNext()) {
@@ -326,9 +349,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 deviceListNames.add(name);
 
                 if (favorite == 0) {
-                    deviceListIcons.add(R.drawable.heart_grey);
+                    deviceListIcons.add(R.drawable.white_heart);
                 } else {
-                    deviceListIcons.add(R.drawable.heart);
+                    deviceListIcons.add(R.drawable.red_heart);
                 }
 
                 String deviceType = "type" + type;
@@ -341,13 +364,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-
     private boolean addRemoveFavourites(Button button, Marker marker) {
         int i = indices.get(marker.getTitle());
-        if (deviceListIcons.get(i) == R.drawable.heart) {
-            deviceListIcons.set(i, R.drawable.heart_grey);
+        if (deviceListIcons.get(i) == R.drawable.red_heart) {
+            deviceListIcons.set(i, R.drawable.white_heart);
         } else {
-            deviceListIcons.set(i, R.drawable.heart);
+            deviceListIcons.set(i, R.drawable.red_heart);
         }
         adapter.notifyDataSetChanged();
         return db.updateFavorite(marker.getTitle());
@@ -360,6 +382,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void pinDevicesToMap() {
 
         mMap.clear();   // remove all the pins
+        myPositionMarker = addMarker(MY_POSITION, myPositionMarker.getPosition(), R.drawable.ic_standing_up_man_svgrepo_com);
 
         // read data from database
         Cursor cursor = db.readAllData();
@@ -371,7 +394,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             double lng = cursor.getDouble(3);
 
             LatLng latLng = addSpaceBetweenDetectedDevices(lat, lng);
-            addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com);
+            if (isDarkMode){
+                addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com_dark);
+            } else {
+                addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com);
+            }
         }
 
     }
@@ -436,6 +463,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         sendIntent.setType("text/plain");
 
         Intent sharedIntent = Intent.createChooser(sendIntent, null);
+
         startActivity(sharedIntent);
     }
 
