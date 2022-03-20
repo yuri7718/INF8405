@@ -104,6 +104,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Dark Mode Activation
         SharedPreferences sharedPreferences
                 = getSharedPreferences(
                 "sharedPrefs", MODE_PRIVATE);
@@ -142,6 +143,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 share();
             }
         });
+        //Swap Theme config
 
         swapTheme.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -236,6 +238,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             }
         };
+        //some devices using WIFI don't support GPS
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DIST, locationListener);
@@ -253,6 +256,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mPopupWindow.dismiss();
                 }
 
+                //The popup window of the marker ("comment y arriver" and "Favoris")
                 popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);
                 ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
                 View viewContainer = getLayoutInflater().inflate(R.layout.default_marker_info_layout, null);
@@ -275,6 +279,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 markerInfoContainer.addView(viewContainer);
 
 
+                // adjust the window position
                 mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 mPopupWindow.setBackgroundDrawable(new BitmapDrawable());
                 mPopupWindow.setOutsideTouchable(true);
@@ -288,12 +293,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mHeight = popupView.getMeasuredHeight();
                 mMarker = marker;
 
-                //PopupWindow popupWindow = new PopupWindow(mainView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                //popupWindow.showAtLocation(findViewById(R.id.map), Gravity.CENTER_HORIZONTAL, 0, 0); //map is the fragment on the activity layout where I put the map
-
                 updatePopup();
 
 
+                //directions
                 directions_button.setOnClickListener(new View.OnClickListener() {
 
                     @Override
@@ -302,6 +305,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 });
 
+                //favourites
                 favourites_button.setOnClickListener(new View.OnClickListener() {
 
                     @Override
@@ -326,6 +330,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void updateDevicesList() {
 
         Cursor cursor = db.readAllData();
+        //iterate in the devices list
 
         while (cursor.moveToNext()) {
             String addr = cursor.getString(0);
@@ -360,6 +365,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
         adapter.notifyDataSetChanged();
+        //add markers to the map
         pinDevicesToMap();
     }
 

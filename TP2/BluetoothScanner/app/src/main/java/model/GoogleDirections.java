@@ -1,4 +1,5 @@
 package model;
+/* Ce code a ete inspire de https://stackoverflow.com/questions/11745314/why-retrieving-google-directions-for-android-using-kml-data-is-not-working-anymo */
 
 import android.content.Context;
 import android.graphics.Color;

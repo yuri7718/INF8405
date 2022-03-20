@@ -51,9 +51,6 @@ class FileDownloader extends AsyncTask<String, String, String> {
             connection.connect();
 
             // this will be useful so that you can show a tipical 0-100%
-            // progress bar
-            int lenghtOfFile = connection.getContentLength();
-
             // download the file
             InputStream input = new BufferedInputStream(url.openStream(),
                     8192);
@@ -84,8 +81,7 @@ class FileDownloader extends AsyncTask<String, String, String> {
      * Updating progress bar
      * */
     protected void onProgressUpdate(String... progress) {
-        // setting progress percentage
-        //pDialog.setProgress(Integer.parseInt(progress[0]));
+
     }
 
     /**
@@ -93,8 +89,6 @@ class FileDownloader extends AsyncTask<String, String, String> {
      * **/
     @Override
     protected void onPostExecute(String file_url) {
-        // dismiss the dialog after the file was downloaded
-        //dismissDialog(progress_bar_type);
 
     }
 

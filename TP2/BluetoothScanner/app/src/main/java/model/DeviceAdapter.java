@@ -56,6 +56,7 @@ public class DeviceAdapter extends ArrayAdapter<String> {
             holder = (DeviceViewHolder) singleDevice.getTag();
         }
 
+        //adjust with dark mode
         if (isDarkMode){
             holder.deviceName.setTextColor(Color.WHITE);
             holder.macAddress.setTextColor(Color.WHITE);
@@ -72,6 +73,7 @@ public class DeviceAdapter extends ArrayAdapter<String> {
 
             @Override
             public void onClick(View view) {
+                //devices info to share
                 String deviceInfo =
                         deviceNames.get(position) + "\n" +
                         macAddresses.get(position) + "\n" +
