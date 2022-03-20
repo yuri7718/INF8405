@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -103,6 +104,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SharedPreferences sharedPreferences
+                = getSharedPreferences(
+                "sharedPrefs", MODE_PRIVATE);
+        this.isDarkMode
+                = sharedPreferences
+                .getBoolean(
+                        "isDarkModeOn", false);
         setContentView(R.layout.activity_maps);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -114,8 +122,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
-        adapter = new DeviceAdapter(this, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
+        adapter = new DeviceAdapter(this, isDarkMode, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
         deviceListView.setAdapter(adapter);
+
 
         // initialize database
         db = new DatabaseHelper(this);
@@ -167,14 +176,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
-        // get devices from database
-        SharedPreferences sharedPreferences
-                = getSharedPreferences(
-                "sharedPrefs", MODE_PRIVATE);
-        this.isDarkMode
-                = sharedPreferences
-                .getBoolean(
-                        "isDarkModeOn", false);
 
     }
 
@@ -462,6 +463,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         sendIntent.setType("text/plain");
 
         Intent sharedIntent = Intent.createChooser(sendIntent, null);
+
         startActivity(sharedIntent);
     }
 
