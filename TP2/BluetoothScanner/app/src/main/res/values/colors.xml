@@ -8,4 +8,11 @@
     <color name="textAlt">#8D8F97</color>
 
     <color name="mainBackground">#ffffff</color>
+    <color name="grey">#808080</color>
+    <color name="red">#ff0000</color>
+    <color name="blue">#0000FF</color>
+
+
+
+
 </resources>

@@ -1,6 +1,4 @@
-<resources>
-    <string name="app_name">BluetoothScanner</string>
-    <string name="map_style">[
+[
   {
     "elementType": "geometry",
     "stylers": [
@@ -186,5 +184,3 @@
     ]
   }
 ]
-    </string>
-</resources>

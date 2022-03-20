@@ -3,10 +3,23 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable-night/ic_pushpin_svgrepo_com.xml" value="0.148" />
+        <entry key="app/src/main/res/drawable-night/ic_pushpin_svgrepo_com_dark.xml" value="0.133" />
+        <entry key="app/src/main/res/drawable-night/ic_standing_up_man_svgrepo_com.xml" value="0.133" />
+        <entry key="app/src/main/res/drawable-night/ic_standing_up_man_svgrepo_com_dark.xml" value="0.133" />
+        <entry key="app/src/main/res/drawable-night/red_heart.xml" value="0.148" />
+        <entry key="app/src/main/res/drawable-night/white_heart.xml" value="0.148" />
         <entry key="app/src/main/res/drawable/default_marker_info_window.xml" value="0.1905" />
+        <entry key="app/src/main/res/drawable/ic_baseline_favorite_24.xml" value="0.148" />
+        <entry key="app/src/main/res/drawable/ic_pushpin_svgrepo_com.xml" value="0.148" />
+        <entry key="app/src/main/res/drawable/ic_pushpin_svgrepo_com_dark.xml" value="0.133" />
+        <entry key="app/src/main/res/drawable/ic_standing_up_man_svgrepo_com.xml" value="0.133" />
+        <entry key="app/src/main/res/drawable/ic_standing_up_man_svgrepo_com_dark.xml" value="0.133" />
+        <entry key="app/src/main/res/drawable/red_heart.xml" value="0.148" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.2554347826086957" />
         <entry key="app/src/main/res/layout/activity_maps.xml" value="0.25831298828125004" />
         <entry key="app/src/main/res/layout/default_marker_info_layout.xml" value="0.12771739130434784" />
+        <entry key="app/src/main/res/layout/single_device.xml" value="0.14583333333333334" />
       </map>
     </option>
   </component>
