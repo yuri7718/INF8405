@@ -56,6 +56,7 @@ import model.DatabaseHelper;
 import model.DeviceAdapter;
 import model.GPSTracker;
 import model.GoogleDirections;
+import sensors.ShakeService;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -100,6 +101,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button shareBtn;
     private Button swapTheme;
     private boolean isDarkMode;
+    private ShakeService mShakeService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,6 +122,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // get current location
         gpsTracker = new GPSTracker(getApplicationContext());
         mLocation = gpsTracker.getLocation();
+        mShakeService = new ShakeService(this);
+
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
@@ -179,6 +183,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+        
+    }
+
+
+    @Override
+    protected void onResume() {
+        mShakeService.register();
+        super.onResume();
+    }
+    @Override
+    protected void onPause() {
+        mShakeService.unregister();
+        super.onPause();
     }
 
     /**

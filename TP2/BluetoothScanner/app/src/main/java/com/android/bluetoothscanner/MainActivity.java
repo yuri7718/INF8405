@@ -24,6 +24,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -37,11 +42,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import java.util.Set;
 
 import model.BluetoothScanner;
+import sensors.ShakeService;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity{
 
     private static final int REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int TIME_OUT = 3000; // wait 3s before showing the main view of the application
+    private ShakeService mShakeService;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             startMapsActivity();
         }
-
+        mShakeService = new ShakeService(this);
     }
 
     private void startMapsActivity() {
@@ -125,12 +133,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onMapReady(@NonNull GoogleMap googleMap) {
-
-    }
-
-    @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
         super.onPointerCaptureChanged(hasCapture);
     }
+
+    @Override
+    protected void onResume() {
+        mShakeService.register();
+        super.onResume();
+    }
+    @Override
+    protected void onPause() {
+        mShakeService.unregister();
+        super.onPause();
+    }
+
+
 }
