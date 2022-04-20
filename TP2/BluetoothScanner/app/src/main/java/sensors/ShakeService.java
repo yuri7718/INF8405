@@ -1,12 +1,20 @@
 package sensors;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
+import android.os.BatteryManager;
+import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
 
 import com.android.bluetoothscanner.MainActivity;
 
@@ -19,11 +27,28 @@ public class ShakeService  implements SensorEventListener {
     private float last_x;
     private float last_y;
     private float last_z;
+    private int initialBatteryLevel;
+    private ConnectivityManager cm;
+    private BatteryManager bm;
 
     public ShakeService(Context context) {
         mSensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
-        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         this.context = context;
+        this.cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        this.bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+        this.initialBatteryLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+        SharedPreferences sharedPreferences
+                = context.getSharedPreferences(
+                "sharedPrefs", Context.MODE_PRIVATE);
+        final SharedPreferences.Editor editor
+                = sharedPreferences.edit();
+        initialBatteryLevel
+                = sharedPreferences
+                .getInt(
+                        "initialBatteryLevel", bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY));
+        editor.putInt(
+                "initialBatteryLevel", initialBatteryLevel);
     }
 
 
@@ -43,6 +68,7 @@ public class ShakeService  implements SensorEventListener {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -60,7 +86,23 @@ public class ShakeService  implements SensorEventListener {
 
                 if (speed > SHAKE_THRESHOLD) {
                     Log.d("sensor", "shake detected w/ speed: " + speed);
-                    Toast.makeText(this.context, "shake detected w/ speed: " + speed, Toast.LENGTH_SHORT).show();
+                    NetworkInfo netInfo = cm.getActiveNetworkInfo();
+                    if (netInfo == null){
+                        Toast.makeText(this.context, "Mode avion active " + speed, Toast.LENGTH_SHORT).show();
+                    } else {
+                        //should check null because in airplane mode it will be null
+                        NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                        int downSpeed = nc.getLinkDownstreamBandwidthKbps();
+                        int upSpeed = nc.getLinkUpstreamBandwidthKbps();
+                        int batLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                        Boolean isCharging = bm.isCharging();
+                        Toast.makeText(this.context, "Statistiques: \n Network: \n    Uplink: " + upSpeed + "Kbs Downlink: " + downSpeed + "Kbs"
+                                + "\n Batterie: \n    Niveau: " + batLevel + "\n    Entrain de charger: " + isCharging + "\n    Consomation d'energie depuis le debut: " + (batLevel - initialBatteryLevel)
+
+                                , Toast.LENGTH_SHORT).show();
+                    }
+
+
                 }
                 last_x = x;
                 last_y = y;
