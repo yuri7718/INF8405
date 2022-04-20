@@ -8,19 +8,24 @@ import android.hardware.SensorManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.bluetoothscanner.MainActivity;
-
-public class ShakeService  implements SensorEventListener {
+public class StepCounterService implements SensorEventListener {
     private Context context;
     private SensorManager mSensorManager;
     private Sensor sensor;
-    private static final int SHAKE_THRESHOLD = 800;
-    private long lastUpdate;
-    private float last_x;
-    private float last_y;
-    private float last_z;
+    // Creating a variable which will give the running status
+    // and initially given the boolean value as false
+    private boolean running = false;
 
-    public ShakeService(Context context) {
+    // Creating a variable which will counts total steps
+    // and it has been given the value of 0 float
+    private float totalSteps = 0f;
+
+    // Creating a variable  which counts previous total
+    // steps and it has also been given the value of 0 float
+    private float previousTotalSteps = 0f;
+
+
+    public StepCounterService(Context context) {
         mSensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
         sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         this.context = context;
@@ -48,24 +53,7 @@ public class ShakeService  implements SensorEventListener {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             long curTime = System.currentTimeMillis();
             // only allow one update every 100ms.
-            if ((curTime - lastUpdate) > 100) {
-                long diffTime = (curTime - lastUpdate);
-                lastUpdate = curTime;
 
-                float x = sensorEvent.values[0];
-                float y = sensorEvent.values[1];
-                float z = sensorEvent.values[2];
-
-                float speed = Math.abs(x + y + z - last_x - last_y - last_z) / diffTime * 10000;
-
-                if (speed > SHAKE_THRESHOLD) {
-                    Log.d("sensor", "shake detected w/ speed: " + speed);
-                    Toast.makeText(this.context, "shake detected w/ speed: " + speed, Toast.LENGTH_SHORT).show();
-                }
-                last_x = x;
-                last_y = y;
-                last_z = z;
-            }
         }
     }
 

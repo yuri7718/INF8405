@@ -135,7 +135,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         db = new DatabaseHelper(this);
 
         bluetoothScanner = new BluetoothScanner(this);
-        bluetoothScanner.scan(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
+        if (mLocation == null){
+            mLocation = gpsTracker.getLocation();
+        }
+        if( mLocation != null){
+            bluetoothScanner.scan(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
+        }
 
         mGoogleDirections = null;
 
@@ -222,13 +227,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }, MIN_TIME);
 
 
-        LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-        if(myPositionMarker!= null){
-            myPositionMarker.remove();
+        if (mLocation == null){
+            mLocation = gpsTracker.getLocation();
         }
-        myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
+        if( mLocation != null) {
+            LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
 
+            if(myPositionMarker!= null){
+                myPositionMarker.remove();
+            }
+            myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
+        }
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -411,7 +421,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void pinDevicesToMap() {
 
         mMap.clear();   // remove all the pins
-        myPositionMarker = addMarker(MY_POSITION, myPositionMarker.getPosition(), R.drawable.ic_standing_up_man_svgrepo_com);
+        if (myPositionMarker != null){
+            myPositionMarker = addMarker(MY_POSITION, myPositionMarker.getPosition(), R.drawable.ic_standing_up_man_svgrepo_com);
+        }
 
         // read data from database
         Cursor cursor = db.readAllData();
