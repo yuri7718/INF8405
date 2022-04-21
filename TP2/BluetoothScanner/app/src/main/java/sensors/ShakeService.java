@@ -27,9 +27,11 @@ public class ShakeService  implements SensorEventListener {
     private float last_x;
     private float last_y;
     private float last_z;
-    private int initialBatteryLevel;
     private ConnectivityManager cm;
     private BatteryManager bm;
+    private SharedPreferences sharedPreferences;
+    private int initialBatteryLevel;
+
 
     public ShakeService(Context context) {
         mSensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
@@ -37,18 +39,20 @@ public class ShakeService  implements SensorEventListener {
         this.context = context;
         this.cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         this.bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
-        this.initialBatteryLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
-        SharedPreferences sharedPreferences
+        this.sharedPreferences
                 = context.getSharedPreferences(
                 "sharedPrefs", Context.MODE_PRIVATE);
         final SharedPreferences.Editor editor
                 = sharedPreferences.edit();
-        initialBatteryLevel
+        this.initialBatteryLevel
                 = sharedPreferences
                 .getInt(
                         "initialBatteryLevel", bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY));
         editor.putInt(
-                "initialBatteryLevel", initialBatteryLevel);
+                "initialBatteryLevel",  this.initialBatteryLevel);
+        editor.apply();
+
+
     }
 
 
@@ -97,8 +101,8 @@ public class ShakeService  implements SensorEventListener {
                         int batLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
                         Boolean isCharging = bm.isCharging();
                         Toast.makeText(this.context, "Statistiques: \n Network: \n    Uplink: " + upSpeed + "Kbs Downlink: " + downSpeed + "Kbs"
-                                + "\n Batterie: \n    Niveau: " + batLevel + "\n    Entrain de charger: " + isCharging + "\n    Consomation d'energie depuis le debut: " + (batLevel - initialBatteryLevel)
-
+                                + "\n Batterie: \n    Niveau: " + batLevel + "%\n    Entrain de charger: " + isCharging +
+                                        "\n    Consomation d'energie depuis le debut: " + (initialBatteryLevel - batLevel) + "%"
                                 , Toast.LENGTH_SHORT).show();
                     }
 

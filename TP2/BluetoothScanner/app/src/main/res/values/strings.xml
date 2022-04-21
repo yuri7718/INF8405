@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">BluetoothScanner</string>
-    <string name="map_style">[]</string>
-
+    <string name="developers">Developers:</string>
+    <string name="share">Share</string>
+    <string name="swap_theme">Swap Theme</string>
+    <string name="how_to_arrive">How to arrive</string>
+    <string name="language">Fr</string>
 </resources>

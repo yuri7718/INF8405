@@ -24,6 +24,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -39,6 +41,7 @@ import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 
+import java.util.Locale;
 import java.util.Set;
 
 import model.BluetoothScanner;
@@ -72,6 +75,25 @@ public class MainActivity extends AppCompatActivity{
                             AppCompatDelegate
                                     .MODE_NIGHT_NO);
         }
+
+        String languageCode
+                = sharedPreferences
+                .getString(
+                        "language", "en");
+
+        final SharedPreferences.Editor editor
+                = sharedPreferences.edit();
+        editor.putString(
+                "language", languageCode);
+        editor.apply();
+        Locale locale = new Locale(languageCode);
+        Locale.setDefault(locale);
+        Resources resources = getResources();
+        Configuration config = resources.getConfiguration();
+        config.setLocale(locale);
+        resources.updateConfiguration(config, resources.getDisplayMetrics());
+
+
         setContentView(R.layout.activity_main);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {

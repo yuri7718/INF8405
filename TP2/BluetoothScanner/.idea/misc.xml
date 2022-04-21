@@ -19,6 +19,7 @@
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.2554347826086957" />
         <entry key="app/src/main/res/layout/activity_maps.xml" value="0.25831298828125004" />
         <entry key="app/src/main/res/layout/default_marker_info_layout.xml" value="0.12771739130434784" />
+        <entry key="app/src/main/res/layout/default_marker_info_window.xml" value="0.21603260869565216" />
         <entry key="app/src/main/res/layout/single_device.xml" value="0.14583333333333334" />
       </map>
     </option>

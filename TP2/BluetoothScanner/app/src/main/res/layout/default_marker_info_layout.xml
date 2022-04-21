@@ -22,7 +22,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Comment y arriver"
+            android:text="@string/how_to_arrive"
             android:id="@+id/direction_buttons"/>
 
         <Button

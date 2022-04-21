@@ -22,7 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/mainBackground"
-        android:text="Bluetooth Scanner"
+        android:text="@string/app_name"
         android:textAlignment="center"
         android:textColor="@color/mainText"
         android:textSize="34sp"
@@ -46,7 +46,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/mainBackground"
-            android:text="Développeurs:"
+            android:text="@string/developers"
             android:textAlignment="center"
             android:textColor="@color/mainText" />
 
