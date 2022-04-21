@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -48,6 +50,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -56,6 +59,7 @@ import model.DatabaseHelper;
 import model.DeviceAdapter;
 import model.GPSTracker;
 import model.GoogleDirections;
+import sensors.ShakeService;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -92,20 +96,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int mHeight;
     private View popupView;
 
-    private static final String ADD_TO_FAVORITES = "Ajouter aux favoris";
-    private static final String REMOVE_FROM_FAVORITES = "Retirer des favoris";
+    private static String ADD_TO_FAVORITES = "Add to favourites";
+    private static String REMOVE_FROM_FAVORITES = "Remove from favourites";
 
     private GoogleDirections mGoogleDirections;
 
     private Button shareBtn;
     private Button swapTheme;
     private boolean isDarkMode;
+    private ShakeService mShakeService;
+    private SharedPreferences sharedPreferences;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //Dark Mode Activation
-        SharedPreferences sharedPreferences
+        sharedPreferences
                 = getSharedPreferences(
                 "sharedPrefs", MODE_PRIVATE);
         this.isDarkMode
@@ -120,6 +127,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // get current location
         gpsTracker = new GPSTracker(getApplicationContext());
         mLocation = gpsTracker.getLocation();
+        mShakeService = new ShakeService(this);
+
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
@@ -131,11 +140,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         db = new DatabaseHelper(this);
 
         bluetoothScanner = new BluetoothScanner(this);
-        bluetoothScanner.scan(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
+        if (mLocation == null){
+            mLocation = gpsTracker.getLocation();
+        }
+        if( mLocation != null){
+            bluetoothScanner.scan(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
+        }
 
         mGoogleDirections = null;
 
         shareBtn = findViewById(R.id.share);
+        Button languageBtn = findViewById(R.id.language);
         swapTheme = findViewById(R.id.swap_theme);
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -179,6 +194,60 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+        //change language
+        if (sharedPreferences.getString("language", "en").equals("fr")){
+            ADD_TO_FAVORITES = "Ajouter aux favoris";
+            REMOVE_FROM_FAVORITES = "Retirer des favoris";
+        }
+
+        // setting up on click listener event over the button
+        // in order to change the language with the help of
+        // LocaleHelper class
+        languageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String languageCode = "en";
+                if (languageBtn.getText().equals("Fr")){
+                    languageCode = "fr";
+                }
+                updateLanguage(languageCode);
+            }
+        });
+        
+    }
+
+    private void updateLanguage(String languageCode) {
+        final SharedPreferences.Editor editor
+                = sharedPreferences.edit();
+        editor.putString(
+                "language", languageCode);
+        editor.apply();
+        Locale locale = new Locale(languageCode);
+        Locale.setDefault(locale);
+        Resources resources = getResources();
+        Configuration config = resources.getConfiguration();
+        config.setLocale(locale);
+        resources.updateConfiguration(config, resources.getDisplayMetrics());
+        Intent intent = getIntent();
+        finish();
+        startActivity(intent);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        //LocaleManager.setLocale(this);
+    }
+
+    @Override
+    protected void onResume() {
+        mShakeService.register();
+        super.onResume();
+    }
+    @Override
+    protected void onPause() {
+        mShakeService.unregister();
+        super.onPause();
     }
 
     /**
@@ -205,13 +274,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }, MIN_TIME);
 
 
-        LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-        if(myPositionMarker!= null){
-            myPositionMarker.remove();
+        if (mLocation == null){
+            mLocation = gpsTracker.getLocation();
         }
-        myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
+        if( mLocation != null) {
+            LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
 
+            if(myPositionMarker!= null){
+                myPositionMarker.remove();
+            }
+            myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f));
+        }
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -394,7 +468,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void pinDevicesToMap() {
 
         mMap.clear();   // remove all the pins
-        myPositionMarker = addMarker(MY_POSITION, myPositionMarker.getPosition(), R.drawable.ic_standing_up_man_svgrepo_com);
+        if (myPositionMarker != null){
+            myPositionMarker = addMarker(MY_POSITION, myPositionMarker.getPosition(), R.drawable.ic_standing_up_man_svgrepo_com);
+        }
 
         // read data from database
         Cursor cursor = db.readAllData();

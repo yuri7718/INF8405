@@ -41,7 +41,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@color/mainBackground"
-                    android:text="Partager"
+                    android:text="@string/share"
                     android:textColor="@color/mainText"
                     android:textSize="10sp" />
 
@@ -51,7 +51,17 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@color/mainBackground"
-                    android:text="Swap Theme"
+                    android:text="@string/swap_theme"
+                    android:textColor="@color/mainText"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/language"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/mainBackground"
+                    android:text="@string/language"
                     android:textColor="@color/mainText"
                     android:textSize="10sp" />
             </LinearLayout>
