@@ -26,6 +26,13 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -36,14 +43,18 @@ import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 
+import java.util.Locale;
 import java.util.Set;
 
 import model.BluetoothScanner;
+import sensors.ShakeService;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity{
 
     private static final int REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int TIME_OUT = 3000; // wait 3s before showing the main view of the application
+    private ShakeService mShakeService;
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -67,6 +78,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             AppCompatDelegate
                                     .MODE_NIGHT_NO);
         }
+
+        String languageCode
+                = sharedPreferences
+                .getString(
+                        "language", "en");
+
+        final SharedPreferences.Editor editor
+                = sharedPreferences.edit();
+        editor.putString(
+                "language", languageCode);
+        editor.apply();
+        Locale locale = new Locale(languageCode);
+        Locale.setDefault(locale);
+        Resources resources = getResources();
+        Configuration config = resources.getConfiguration();
+        config.setLocale(locale);
+        resources.updateConfiguration(config, resources.getDisplayMetrics());
+
+
         setContentView(R.layout.activity_main);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -76,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             startMapsActivity();
         }
-
+        mShakeService = new ShakeService(this);
     }
 
     private boolean checkCameraPermission() {
@@ -143,12 +173,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onMapReady(@NonNull GoogleMap googleMap) {
-
-    }
-
-    @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
         super.onPointerCaptureChanged(hasCapture);
     }
+
+    @Override
+    protected void onResume() {
+        mShakeService.register();
+        super.onResume();
+    }
+    @Override
+    protected void onPause() {
+        mShakeService.unregister();
+        super.onPause();
+    }
+
+
 }

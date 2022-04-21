@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BluetoothScanner</string>
+    <string name="developers">Développeurs:</string>
+    <string name="share">Partager</string>
+    <string name="swap_theme">Changer de Theme</string>
+    <string name="how_to_arrive">Comment y arriver</string>
+    <string name="language">En</string>
+</resources>
