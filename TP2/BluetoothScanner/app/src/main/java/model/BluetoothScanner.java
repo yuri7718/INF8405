@@ -18,12 +18,15 @@ import androidx.core.content.ContextCompat;
 
 import com.android.bluetoothscanner.MapsActivity;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class BluetoothScanner {
 
@@ -31,6 +34,9 @@ public class BluetoothScanner {
     private static final int REQUEST_BLUETOOTH_CONNECT = 1;
     private final BluetoothAdapter bluetoothAdapter;
     private final DatabaseHelper db;
+
+    private FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+    private DatabaseReference databaseReference = firebaseDatabase.getReference().child("BluetoothDevices");
 
     public BluetoothScanner(Context context) {
         this.context = context;
@@ -69,11 +75,26 @@ public class BluetoothScanner {
                         double lng = latLng.longitude;
 
                         db.addDevice(address, name, lat, lng, type);
+
+                        Map<String, String> deviceRecord = createDeviceRecord(address, name, lat, lng, type);
+                        databaseReference.push().setValue(deviceRecord);
+
                     }
                 }
             };
             IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
             context.registerReceiver(mReceiver, filter);
         }
+    }
+
+    private Map<String, String> createDeviceRecord(String address, String name, double lat, double lng, int type) {
+        Map<String, String> deviceRecord = new HashMap<>();
+        deviceRecord.put("address", address);
+        deviceRecord.put("name", name);
+        deviceRecord.put("lat", Double.toString(lat));
+        deviceRecord.put("lng", Double.toString(lng));
+        deviceRecord.put("type", Integer.toString(type));
+        deviceRecord.put("favorite", "0");
+        return deviceRecord;
     }
 }
