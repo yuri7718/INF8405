@@ -96,8 +96,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int mHeight;
     private View popupView;
 
-    private static final String ADD_TO_FAVORITES = "Ajouter aux favoris";
-    private static final String REMOVE_FROM_FAVORITES = "Retirer des favoris";
+    private static String ADD_TO_FAVORITES = "Add to favourites";
+    private static String REMOVE_FROM_FAVORITES = "Remove from favourites";
 
     private GoogleDirections mGoogleDirections;
 
@@ -194,6 +194,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+        //change language
+        if (sharedPreferences.getString("language", "en").equals("fr")){
+            ADD_TO_FAVORITES = "Ajouter aux favoris";
+            REMOVE_FROM_FAVORITES = "Retirer des favoris";
+        }
 
         // setting up on click listener event over the button
         // in order to change the language with the help of

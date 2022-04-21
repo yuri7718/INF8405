@@ -100,10 +100,26 @@ public class ShakeService  implements SensorEventListener {
                         int upSpeed = nc.getLinkUpstreamBandwidthKbps();
                         int batLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
                         Boolean isCharging = bm.isCharging();
-                        Toast.makeText(this.context, "Statistiques: \n Network: \n    Uplink: " + upSpeed + "Kbs Downlink: " + downSpeed + "Kbs"
-                                + "\n Batterie: \n    Niveau: " + batLevel + "%\n    Entrain de charger: " + isCharging +
-                                        "\n    Consomation d'energie depuis le debut: " + (initialBatteryLevel - batLevel) + "%"
-                                , Toast.LENGTH_SHORT).show();
+                        if (sharedPreferences.getString("language", "en").equals("fr")){
+                            String rep = "Non";
+                            if (isCharging){
+                                rep = "Oui";
+                            }
+                            Toast.makeText(this.context, "Statistiques: \n Network: \n    Uplink: " + upSpeed + "Kbs Downlink: " + downSpeed + "Kbs"
+                                            + "\n Batterie: \n    Niveau: " + batLevel + "%\n    Entrain de charger: " + rep +
+                                            "\n    Consomation d'energie depuis le debut: " + (initialBatteryLevel - batLevel) + "%"
+                                    , Toast.LENGTH_SHORT).show();
+                        } else {
+                            String rep = "No";
+                            if (isCharging){
+                                rep = "Yes";
+                            }
+                            Toast.makeText(this.context, "Statistics: \n Network: \n    Uplink: " + upSpeed + "Kbs Downlink: " + downSpeed + "Kbs"
+                                            + "\n Battery: \n    Level: " + batLevel + "%\n    Charging: " + rep +
+                                            "\n    Power consumption from start: " + (initialBatteryLevel - batLevel) + "%"
+                                    , Toast.LENGTH_SHORT).show();
+                        }
+
                     }
 
 
