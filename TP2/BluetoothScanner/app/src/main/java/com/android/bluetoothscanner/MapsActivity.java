@@ -74,6 +74,7 @@ import model.DeviceAdapter;
 import model.GPSTracker;
 import model.GoogleDirections;
 import sensors.ShakeService;
+import sensors.StepCounterService;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -119,10 +120,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button swapTheme;
     private boolean isDarkMode;
     private ShakeService mShakeService;
+    private StepCounterService mStepCounterService;
     private SharedPreferences sharedPreferences;
 
 
     ImageView profilePicture;
+
+    TextView stepCounterSteps;
+    Button stepCounterStartBtn;
+    Button stepCounterStopBtn;
+    Button stepCounterResetBtn;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,7 +237,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 updateLanguage(languageCode);
             }
         });
-        
+        initializeStepCounter();
+    }
+
+    private void initializeStepCounter() {
+        stepCounterStartBtn = findViewById(R.id.step_counter_start);
+        stepCounterStopBtn = findViewById(R.id.step_counter_stop);
+        stepCounterResetBtn = findViewById(R.id.step_counter_reset);
+
+        mStepCounterService = new StepCounterService(this);
+
+
+        stepCounterSteps = findViewById(R.id.step_count);
+
+        stepCounterStartBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mStepCounterService.register();
+            }
+        });
+
+        stepCounterStopBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mStepCounterService.unregister();
+            }
+        });
+
+        stepCounterResetBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mStepCounterService.resetSteps();
+            }
+        });
     }
 
     private void updateLanguage(String languageCode) {
