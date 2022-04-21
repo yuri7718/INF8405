@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "628917083202",
+    "firebase_url": "https://bluetoothscanner-6e150-default-rtdb.firebaseio.com",
+    "project_id": "bluetoothscanner-6e150",
+    "storage_bucket": "bluetoothscanner-6e150.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:628917083202:android:bbca4e90e4d154b00861db",
+        "android_client_info": {
+          "package_name": "com.android.bluetoothscanner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "628917083202-qq3odb078m04a01f4ebk7ilr0i7ev8sq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.android.bluetoothscanner",
+            "certificate_hash": "d402ae18e84a44a0e1158dd645fa4ba33dd19bfd"
+          }
+        },
+        {
+          "client_id": "628917083202-io6i2t2jjfro3ug10hv2i084nn10hufd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeuT3LwDdZPZBRy7PSYu-G1Uyq4QzYdgo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "628917083202-io6i2t2jjfro3ug10hv2i084nn10hufd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
