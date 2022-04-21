@@ -1,6 +1,7 @@
 package com.android.bluetoothscanner;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -24,6 +25,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int TIME_OUT = 3000; // wait 3s before showing the main view of the application
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,10 +71,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestLocationPermission();
+        } else if (checkCameraPermission()) {
+            requestCameraPermission();
         } else {
             startMapsActivity();
         }
 
+    }
+
+    private boolean checkCameraPermission() {
+        boolean res1 = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        boolean res2 = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        return res1 && res2;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void requestCameraPermission() {
+        requestPermissions(new String[]{ Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
     }
 
     private void startMapsActivity() {

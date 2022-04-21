@@ -1,5 +1,7 @@
 package com.android.bluetoothscanner;
 
+
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
@@ -16,6 +19,7 @@ import android.location.Location;
 
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Display;
@@ -23,6 +27,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -44,7 +49,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.theartofdev.edmodo.cropper.CropImage;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -100,6 +107,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button shareBtn;
     private Button swapTheme;
     private boolean isDarkMode;
+
+    ImageView profilePicture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -250,7 +259,47 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMarkerClick(Marker marker) {
                 
-                if (marker.getTitle().equals(MY_POSITION)) return false;
+                if (marker.getTitle().equals(MY_POSITION)) {
+
+                    popupView = getLayoutInflater().inflate(R.layout.user_info_window, null);
+                    ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
+                    View viewContainer = getLayoutInflater().inflate(R.layout.user_info_layout, null);
+
+                    profilePicture = viewContainer.findViewById(R.id.profile_pic);
+                    profilePicture.setOnClickListener(new View.OnClickListener() {
+
+                        @Override
+                        public void onClick(View view) {
+                            boolean pick = true;
+                            if (pick==true) {
+                                pickImage();
+                            } else {
+                                pickImage();
+                            }
+                        }
+                    });
+
+
+                    markerInfoContainer.addView(viewContainer);
+
+                    // adjust the window position
+                    mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    mPopupWindow.setBackgroundDrawable(new BitmapDrawable());
+                    mPopupWindow.setOutsideTouchable(true);
+                    Display display = getWindowManager().getDefaultDisplay();
+                    Point size = new Point();
+                    display.getSize(size);
+                    popupView.measure(size.x, size.y);
+
+
+                    mWidth = popupView.getMeasuredWidth();
+                    mHeight = popupView.getMeasuredHeight();
+                    mMarker = marker;
+
+                    updatePopup();
+
+                    return true;
+                }
 
                 if (mPopupWindow != null) {
                     mPopupWindow.dismiss();
@@ -322,6 +371,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             }
         });
+    }
+
+    private void pickImage() {
+        CropImage.activity().start(this);
+    }
+
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                Uri resultUri = result.getUri();
+                try {
+                    InputStream stream = getContentResolver().openInputStream(resultUri);
+                    Bitmap bitmap = BitmapFactory.decodeStream(stream);
+                    profilePicture.setImageBitmap(bitmap);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                Exception error = result.getError();
+            }
+        }
     }
 
     /**
@@ -548,5 +621,4 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
     }
-
 }
