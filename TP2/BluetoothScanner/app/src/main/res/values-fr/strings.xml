@@ -6,4 +6,9 @@
     <string name="swap_theme">Changer de Theme</string>
     <string name="how_to_arrive">Comment y arriver</string>
     <string name="language">En</string>
+    <string name="step_counter_start">Lancer</string>
+    <string name="step_counter_stop">Arrêter</string>
+    <string name="step_counter_reset">Réinitialiser</string>
+    <string name="step_label">Pas: </string>
+    <string name="change_username">Changer le nom</string>
 </resources>

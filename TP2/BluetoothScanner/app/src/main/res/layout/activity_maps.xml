@@ -52,7 +52,7 @@
                     android:id="@+id/change_username"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="CHANGE USERNAME"
+                    android:text="@string/change_username"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -66,7 +66,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Steps:" />
+                    android:text="@string/step_label" />
 
                 <TextView
                     android:id="@+id/step_count"
@@ -87,7 +87,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="START"
+                    android:text="@string/step_counter_start"
                     android:textSize="10sp" />
 
                 <Button
@@ -95,7 +95,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="STOP"
+                    android:text="@string/step_counter_stop"
                     android:textSize="10sp" />
 
                 <Button
@@ -103,7 +103,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="RESET"
+                    android:text="@string/step_counter_reset"
                     android:textSize="10sp" />
             </LinearLayout>
 
