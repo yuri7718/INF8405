@@ -1,13 +1,12 @@
 package com.android.bluetoothscanner;
 
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -25,12 +24,14 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
@@ -38,6 +39,7 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
@@ -124,7 +126,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SharedPreferences sharedPreferences;
 
 
-    ImageView profilePicture;
+    ImageView profilePictureV1;
+    ImageView profilePictureV2;
+    TextView usernameV1;
+    TextView usernameV2;
+    Button changeUsernameBtn;
+    private String usernameInput = "";
 
     TextView stepCounterSteps;
     Button stepCounterStartBtn;
@@ -132,13 +139,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     Button stepCounterResetBtn;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //Dark Mode Activation
-        sharedPreferences
-                = getSharedPreferences(
-                "sharedPrefs", MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         this.isDarkMode
                 = sharedPreferences
                 .getBoolean(
@@ -238,6 +244,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
         initializeStepCounter();
+        initializeUserProfile();
+
     }
 
     private void initializeStepCounter() {
@@ -386,22 +394,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
                     View viewContainer = getLayoutInflater().inflate(R.layout.user_info_layout, null);
 
-                    profilePicture = viewContainer.findViewById(R.id.profile_pic);
+                    String username = sharedPreferences.getString("username", "USERNAME");
+                    Log.i("test-profile", username);
+                    usernameV2 = viewContainer.findViewById(R.id.username_v2);
+                    usernameV2.setText(username);
 
-                    loadProfilePicture();
-                    profilePicture.setOnClickListener(new View.OnClickListener() {
-
-                        @Override
-                        public void onClick(View view) {
-                            boolean pick = true;
-                            if (pick==true) {
-                                pickImage();
-                            } else {
-                                pickImage();
-                            }
-                        }
-                    });
-
+                    profilePictureV2 = viewContainer.findViewById(R.id.profile_pic_v2);
+                    loadProfilePictureV2();
 
                     markerInfoContainer.addView(viewContainer);
 
@@ -494,6 +493,61 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             }
         });
+
+    }
+
+    private void initializeUserProfile() {
+        profilePictureV1 = findViewById(R.id.profile_pic_v1);
+
+
+        profilePictureV1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) { pickImage(); }
+        });
+        loadProfilePictureV1();
+        usernameV1 = findViewById(R.id.username_v1);
+
+
+        String username = sharedPreferences.getString("username", "USERNAME");
+        usernameV1.setText(username);
+
+
+        changeUsernameBtn = findViewById(R.id.change_username);
+        changeUsernameBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createUsernameInputPopup();
+            }
+        });
+    }
+
+    private void createUsernameInputPopup() {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Please enter your username");
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                usernameInput = input.getText().toString();
+                usernameV1.setText(usernameInput);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("username", usernameInput);
+                editor.apply();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+            }
+        });
+
+        builder.show();
     }
 
     private void pickImage() {
@@ -510,7 +564,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 try {
                     InputStream stream = getContentResolver().openInputStream(resultUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(stream);
-                    profilePicture.setImageBitmap(bitmap);
+                    profilePictureV1.setImageBitmap(bitmap);
+                    profilePictureV2.setImageBitmap(bitmap);
 
                     // save picture
                     String directory = saveProfilePicture(bitmap);
@@ -545,7 +600,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return directory.getAbsolutePath();
     }
 
-    private boolean loadProfilePicture() {
+    private boolean loadProfilePictureV1() {
         try {
             ContextWrapper cw = new ContextWrapper(getApplicationContext());
             File directory = cw.getDir("profile", Context.MODE_PRIVATE);
@@ -553,9 +608,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             File file = new File(path, "profile.png");
             if (file.exists()) {
                 Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-                profilePicture.setImageBitmap(bitmap);
+                profilePictureV1.setImageBitmap(bitmap);
             } else {
-                profilePicture.setImageResource(R.drawable.default_profile_pic);
+                profilePictureV1.setImageResource(R.drawable.default_profile_pic);
+            }
+            return true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean loadProfilePictureV2() {
+        try {
+            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+            File directory = cw.getDir("profile", Context.MODE_PRIVATE);
+            String path = directory.getAbsolutePath();
+            File file = new File(path, "profile.png");
+            if (file.exists()) {
+                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
+                profilePictureV2.setImageBitmap(bitmap);
+            } else {
+                profilePictureV2.setImageResource(R.drawable.default_profile_pic);
             }
             return true;
         } catch (FileNotFoundException e) {
