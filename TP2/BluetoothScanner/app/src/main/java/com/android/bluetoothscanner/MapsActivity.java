@@ -4,6 +4,7 @@ package com.android.bluetoothscanner;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -22,6 +23,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
@@ -51,6 +53,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.theartofdev.edmodo.cropper.CropImage;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -266,6 +273,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     View viewContainer = getLayoutInflater().inflate(R.layout.user_info_layout, null);
 
                     profilePicture = viewContainer.findViewById(R.id.profile_pic);
+
+                    loadProfilePicture();
                     profilePicture.setOnClickListener(new View.OnClickListener() {
 
                         @Override
@@ -388,6 +397,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     InputStream stream = getContentResolver().openInputStream(resultUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(stream);
                     profilePicture.setImageBitmap(bitmap);
+
+                    // save picture
+                    String directory = saveProfilePicture(bitmap);
+                    Log.i("test-picture", directory);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -397,6 +410,45 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private String saveProfilePicture(Bitmap bitmapImg) {
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("profile", Context.MODE_PRIVATE);
+        File path = new File(directory, "profile.png");
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(path);
+            bitmapImg.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return directory.getAbsolutePath();
+    }
+
+    private boolean loadProfilePicture() {
+        try {
+            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+            File directory = cw.getDir("profile", Context.MODE_PRIVATE);
+            String path = directory.getAbsolutePath();
+            File file = new File(path, "profile.png");
+            if (file.exists()) {
+                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
+                profilePicture.setImageBitmap(bitmap);
+            } else {
+                profilePicture.setImageResource(R.drawable.default_profile_pic);
+            }
+            return true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     /**
      *
      */
