@@ -1,27 +1,22 @@
-package model;
+package model.database;
 
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
-
 import androidx.annotation.RequiresApi;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 
+/**
+ * Deprecated
+ */
 public class DbController {
 
     private final Context context;
@@ -98,6 +93,7 @@ public class DbController {
             ex.printStackTrace();
         }
     }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     public JSONObject getDevicesLocations(){
         readDataFromDB();

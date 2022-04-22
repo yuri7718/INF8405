@@ -11,16 +11,131 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/mainBackground"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:weightSum="10">
 
-        <fragment
-            android:id="@+id/map"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="3"
-            tools:context=".MapsActivity"
-            tools:ignore="MissingConstraints" />
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/service_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="10">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="4"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_gravity="center_horizontal">
+
+                        <TextView
+                            android:id="@+id/step_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/step_label"
+                            android:textColor="@color/mainText" />
+
+                        <TextView
+                            android:id="@+id/step_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/mainText"
+                            android:text="0" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/step_counter_start"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/step_counter_start"
+                            android:textSize="9sp" />
+
+                        <Button
+                            android:id="@+id/step_counter_stop"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/step_counter_stop"
+                            android:textSize="9sp" />
+
+                        <Button
+                            android:id="@+id/step_counter_reset"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/step_counter_reset"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+                </LinearLayout><!-- end step counter service layout -->
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="6"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/shake_service"
+                        android:textColor="@color/mainText"
+                        android:textAlignment="center" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/shake_start"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/shake_start"
+                            android:textSize="10sp" />
+
+                        <Button
+                            android:id="@+id/shake_stop"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/shake_stop"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+                </LinearLayout><!-- end shake service layout -->
+            </LinearLayout><!-- end service_toolbar -->
+
+
+            <fragment
+                android:id="@+id/map"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context=".MapsActivity" />
+
+        </LinearLayout><!-- end left layout -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -46,6 +161,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="USERNAME"
+                    android:textColor="@color/mainText"
                     android:textAlignment="center" />
 
                 <Button
@@ -57,57 +173,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/step_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/step_label" />
-
-                <TextView
-                    android:id="@+id/step_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="0" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/step_counter_start"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/step_counter_start"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/step_counter_stop"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/step_counter_stop"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/step_counter_reset"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/step_counter_reset"
-                    android:textSize="10sp" />
-            </LinearLayout>
-
-            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/mainBackground"
@@ -115,7 +180,7 @@
 
                 <Button
                     android:id="@+id/share"
-                    android:layout_width="fill_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@color/mainBackground"
@@ -125,7 +190,7 @@
 
                 <Button
                     android:id="@+id/swap_theme"
-                    android:layout_width="fill_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@color/mainBackground"
@@ -135,7 +200,7 @@
 
                 <Button
                     android:id="@+id/language"
-                    android:layout_width="fill_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@color/mainBackground"
@@ -148,9 +213,8 @@
                 android:id="@+id/device_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/mainBackground"
-                />
-        </LinearLayout>
+                android:background="@color/mainBackground" />
+        </LinearLayout><!-- end right layout -->
 
     </LinearLayout>
 

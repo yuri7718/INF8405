@@ -10,23 +10,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import com.android.bluetoothscanner.MapsActivity;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import model.database.DatabaseHelper;
 
 public class BluetoothScanner {
 
@@ -74,8 +69,10 @@ public class BluetoothScanner {
                         double lat = latLng.latitude;
                         double lng = latLng.longitude;
 
-                        db.addDevice(address, name, lat, lng, type);
-
+                        boolean res = db.addDevice(address, name, lat, lng, type);
+                        if (!res) {
+                            Toast.makeText(context, "Failed to add device to database", Toast.LENGTH_SHORT).show();
+                        }
                         Map<String, String> deviceRecord = createDeviceRecord(address, name, lat, lng, type);
                         databaseReference.push().setValue(deviceRecord);
 

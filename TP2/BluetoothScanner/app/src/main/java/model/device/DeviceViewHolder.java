@@ -1,11 +1,13 @@
-package model;
+package model.device;
 
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.android.bluetoothscanner.R;
 
+/**
+ * Class for storing information about each detected device
+ */
 public class DeviceViewHolder {
     ImageView favoriteIcon;
     TextView deviceName;

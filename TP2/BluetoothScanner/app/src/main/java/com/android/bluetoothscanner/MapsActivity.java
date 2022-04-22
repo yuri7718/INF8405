@@ -1,6 +1,9 @@
 package com.android.bluetoothscanner;
 
 
+
+import static language.LocaleHelper.updateLanguage;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -71,10 +74,11 @@ import java.util.Map;
 import java.util.Random;
 
 import model.BluetoothScanner;
-import model.DatabaseHelper;
-import model.DeviceAdapter;
+import model.database.DatabaseHelper;
+import model.device.DeviceAdapter;
 import model.GPSTracker;
 import model.GoogleDirections;
+import model.profile.UserProfile;
 import sensors.ShakeService;
 import sensors.StepCounterService;
 
@@ -101,7 +105,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     DeviceAdapter adapter;
 
     DatabaseHelper db;
-    Map<String, Map> deviceList = new HashMap<>();
 
     private static final String MY_POSITION = "My Position";
     private Marker myPositionMarker;
@@ -113,58 +116,59 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int mHeight;
     private View popupView;
 
-    private static String ADD_TO_FAVORITES = "Add to favourites";
-    private static String REMOVE_FROM_FAVORITES = "Remove from favourites";
-
     private GoogleDirections mGoogleDirections;
 
-    private Button shareBtn;
-    private Button swapTheme;
-    private boolean isDarkMode;
+
+    /**
+     * Sensor services
+     */
     private ShakeService mShakeService;
     private StepCounterService mStepCounterService;
+
+    /**
+     * Shared preferences
+     */
     private SharedPreferences sharedPreferences;
+    private static final String SHARED_PREFERENCES = "sharedPrefs";
+    private static final String DARK_MODE = "isDarkModeOn";
+    private static final String LANGUAGE = "language";
+    private static final String USERNAME = "username";
 
-
-    ImageView profilePictureV1;
-    ImageView profilePictureV2;
-    TextView usernameV1;
-    TextView usernameV2;
-    Button changeUsernameBtn;
-    private String usernameInput = "";
-
-    TextView stepCounterSteps;
-    Button stepCounterStartBtn;
-    Button stepCounterStopBtn;
-    Button stepCounterResetBtn;
-
+    private boolean isDarkModeOn = false;
+    private UserProfile userProfile;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Dark Mode Activation
-        sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        this.isDarkMode
-                = sharedPreferences
-                .getBoolean(
-                        "isDarkModeOn", false);
-        setContentView(R.layout.activity_maps);
 
+        sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+
+        // get theme, default is false
+        sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+        isDarkModeOn = sharedPreferences.getBoolean(DARK_MODE, false);
+        if (isDarkModeOn) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
+        // get language code, default is en
+        String languageCode = sharedPreferences.getString(LANGUAGE, "en");
+        updateLanguage(this, languageCode);
+
+        setContentView(R.layout.activity_maps);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         // get current location
         gpsTracker = new GPSTracker(getApplicationContext());
         mLocation = gpsTracker.getLocation();
-        mShakeService = new ShakeService(this);
-
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
-        adapter = new DeviceAdapter(this, isDarkMode, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
+        adapter = new DeviceAdapter(this, isDarkModeOn, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
         deviceListView.setAdapter(adapter);
-
 
         // initialize database
         db = new DatabaseHelper(this);
@@ -179,84 +183,101 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mGoogleDirections = null;
 
-        shareBtn = findViewById(R.id.share);
+        initializeButtons();
+        initializeShakeService();
+        initializeStepCounter();
+        userProfile = new UserProfile(this);
+    }
+
+    /**
+     * Initialize share, swap theme, and language
+     */
+    private void initializeButtons() {
+        Button shareBtn = findViewById(R.id.share);
+        Button swapThemeBtn = findViewById(R.id.swap_theme);
         Button languageBtn = findViewById(R.id.language);
-        swapTheme = findViewById(R.id.swap_theme);
+
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 share();
             }
         });
-        //Swap Theme config
 
-        swapTheme.setOnClickListener(new View.OnClickListener() {
+        // toggle theme
+        swapThemeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Saving state of our app
-                // using SharedPreferences
-                SharedPreferences sharedPreferences
-                        = getSharedPreferences(
-                        "sharedPrefs", MODE_PRIVATE);
-                final SharedPreferences.Editor editor
-                        = sharedPreferences.edit();
-                final boolean isDarkModeOn
-                        = sharedPreferences
-                        .getBoolean(
-                                "isDarkModeOn", false);
-                if(isDarkModeOn){
-                    editor.putBoolean(
-                            "isDarkModeOn", false);
-                    editor.apply();
-                    AppCompatDelegate
-                            .setDefaultNightMode(
-                                    AppCompatDelegate
-                                            .MODE_NIGHT_NO);
+                // save state of our app using SharedPreferences
+                boolean darkMode = sharedPreferences.getBoolean(DARK_MODE, false);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean(DARK_MODE, !darkMode);
+                editor.apply();
+
+                // change theme
+                if (darkMode) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 } else {
-                    editor.putBoolean(
-                            "isDarkModeOn", true);
-                    editor.apply();
-                    AppCompatDelegate
-                            .setDefaultNightMode(
-                                    AppCompatDelegate
-                                            .MODE_NIGHT_YES);
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                 }
             }
         });
 
-        //change language
-        if (sharedPreferences.getString("language", "en").equals("fr")){
-            ADD_TO_FAVORITES = "Ajouter aux favoris";
-            REMOVE_FROM_FAVORITES = "Retirer des favoris";
-        }
-
-        // setting up on click listener event over the button
-        // in order to change the language with the help of
-        // LocaleHelper class
+        // update language based on language code
+        // language code is either en or fr
+        // the default language code is en
         languageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String languageCode = "en";
-                if (languageBtn.getText().equals("Fr")){
-                    languageCode = "fr";
-                }
-                updateLanguage(languageCode);
+                String languageCode = languageBtn.getText().toString().toLowerCase();
+                updateLanguage(MapsActivity.this, languageCode);
+
+                // save language code
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(LANGUAGE, languageCode);
+                editor.apply();
+
+                // refresh and destroy current activity
+                Intent refresh = new Intent(MapsActivity.this, MapsActivity.class);
+                startActivity(refresh);
+                finish();
             }
         });
-        initializeStepCounter();
-        initializeUserProfile();
-
     }
 
+    /**
+     * Initialize shake service
+     */
+    private void initializeShakeService() {
+        Button shakeStartBtn = findViewById(R.id.shake_start);
+        Button shakeStopBtn = findViewById(R.id.shake_stop);
+
+        mShakeService = new ShakeService(this);
+
+        shakeStartBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mShakeService.register();
+            }
+        });
+
+        shakeStopBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mShakeService.unregister();
+            }
+        });
+    }
+
+    /**
+     * Initialize step counter service
+     */
     private void initializeStepCounter() {
-        stepCounterStartBtn = findViewById(R.id.step_counter_start);
-        stepCounterStopBtn = findViewById(R.id.step_counter_stop);
-        stepCounterResetBtn = findViewById(R.id.step_counter_reset);
+        Button stepCounterStartBtn = findViewById(R.id.step_counter_start);
+        Button stepCounterStopBtn = findViewById(R.id.step_counter_stop);
+        Button stepCounterResetBtn = findViewById(R.id.step_counter_reset);
 
         mStepCounterService = new StepCounterService(this);
-
-
-        stepCounterSteps = findViewById(R.id.step_count);
 
         stepCounterStartBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -280,37 +301,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private void updateLanguage(String languageCode) {
-        final SharedPreferences.Editor editor
-                = sharedPreferences.edit();
-        editor.putString(
-                "language", languageCode);
-        editor.apply();
-        Locale locale = new Locale(languageCode);
-        Locale.setDefault(locale);
-        Resources resources = getResources();
-        Configuration config = resources.getConfiguration();
-        config.setLocale(locale);
-        resources.updateConfiguration(config, resources.getDisplayMetrics());
-        Intent intent = getIntent();
-        finish();
-        startActivity(intent);
-    }
-
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        //LocaleManager.setLocale(this);
     }
 
     @Override
     protected void onResume() {
-        mShakeService.register();
         super.onResume();
     }
+
     @Override
     protected void onPause() {
-        mShakeService.unregister();
         super.onPause();
     }
 
@@ -329,8 +331,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
 
-        final Handler hanlder = new Handler();
-        hanlder.postDelayed(new Runnable() {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 updateDevicesList();
@@ -338,13 +340,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }, MIN_TIME);
 
 
-        if (mLocation == null){
+        if (mLocation == null) {
             mLocation = gpsTracker.getLocation();
         }
-        if( mLocation != null) {
+        if (mLocation != null) {
             LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
 
-            if(myPositionMarker!= null){
+            if (myPositionMarker != null) {
                 myPositionMarker.remove();
             }
             myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
@@ -355,28 +357,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onLocationChanged(Location location) {
                 updateDevicesList();
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                if(myPositionMarker!= null){
+                if (myPositionMarker != null){
                     myPositionMarker.remove();
                 }
                 myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
             }
 
             @Override
-            public void onProviderEnabled(@NonNull String provider) {
-
-            }
+            public void onProviderEnabled(@NonNull String provider) { }
 
             @Override
-            public void onProviderDisabled(@NonNull String provider) {
-
-            }
+            public void onProviderDisabled(@NonNull String provider) { }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
+            public void onStatusChanged(String provider, int status, Bundle extras) { }
         };
-        //some devices using WIFI don't support GPS
+
+        // some devices using WIFI don't support GPS
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DIST, locationListener);
@@ -387,26 +384,70 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                
+
+                if (mPopupWindow != null) {
+                    mPopupWindow.dismiss();
+                }
+
                 if (marker.getTitle().equals(MY_POSITION)) {
 
                     popupView = getLayoutInflater().inflate(R.layout.user_info_window, null);
                     ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
                     View viewContainer = getLayoutInflater().inflate(R.layout.user_info_layout, null);
 
-                    String username = sharedPreferences.getString("username", "USERNAME");
-                    Log.i("test-profile", username);
-                    usernameV2 = viewContainer.findViewById(R.id.username_v2);
-                    usernameV2.setText(username);
+                    TextView usernameView = viewContainer.findViewById(R.id.username_v2);
+                    if (userProfile.isUsernameSet()) {
+                        usernameView.setText(userProfile.getUsername());
+                    } else {
+                        usernameView.setText("USERNAME");
+                    }
 
-                    profilePictureV2 = viewContainer.findViewById(R.id.profile_pic_v2);
-                    loadProfilePictureV2();
+                    ImageView profilePictureView = viewContainer.findViewById(R.id.profile_pic_v2);
+                    if (userProfile.isProfilePicSet()) {
+                        profilePictureView.setImageBitmap(userProfile.getBitmap());
+                    } else {
+                        profilePictureView.setImageResource(R.drawable.default_profile_pic);
+                    }
 
                     markerInfoContainer.addView(viewContainer);
 
                     // adjust the window position
-                    mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    mPopupWindow.setBackgroundDrawable(new BitmapDrawable());
+                    mPopupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    mPopupWindow.setOutsideTouchable(true);
+                    Display display = getWindowManager().getDefaultDisplay();
+                    Point size = new Point();
+                    display.getSize(size);
+                    popupView.measure(size.x, size.y);
+
+                    mWidth = popupView.getMeasuredWidth();
+                    mHeight = popupView.getMeasuredHeight();
+                    mMarker = marker;
+
+                    updatePopup();
+                    return true;
+                } else {
+
+                    // popup window of the marker ("comment y arriver" and "favoris")
+                    popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);
+                    ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
+                    View viewContainer = getLayoutInflater().inflate(R.layout.default_marker_info_layout, null);
+
+                    TextView macAddrView = viewContainer.findViewById(R.id.address_on_pin);
+                    macAddrView.setText(marker.getTitle());
+
+                    Button direction_button = viewContainer.findViewById(R.id.direction_buttons);
+                    Button favourites_button = viewContainer.findViewById(R.id.favourites_button);
+
+                    if (getFavorites().contains(marker.getTitle())) {
+                        favourites_button.setText(getResources().getString(R.string.remove_from_favorites));
+                    } else {
+                        favourites_button.setText(getResources().getString(R.string.add_to_favorites));
+                    }
+
+                    markerInfoContainer.addView(viewContainer);
+
+                    // adjust the window position
+                    mPopupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     mPopupWindow.setOutsideTouchable(true);
                     Display display = getWindowManager().getDefaultDisplay();
                     Point size = new Point();
@@ -417,143 +458,37 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mWidth = popupView.getMeasuredWidth();
                     mHeight = popupView.getMeasuredHeight();
                     mMarker = marker;
-
                     updatePopup();
 
+                    // directions
+                    direction_button.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            getDirections(marker);
+                        }
+                    });
+
+                    // favourites
+                    favourites_button.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            boolean res = addRemoveFavourites(favourites_button, marker);
+                            if (res) {
+                                favourites_button.setText(getResources().getString(R.string.remove_from_favorites));
+                            } else {
+                                favourites_button.setText(getResources().getString(R.string.add_to_favorites));
+                            }
+                        }
+                    });
                     return true;
                 }
-
-                if (mPopupWindow != null) {
-                    mPopupWindow.dismiss();
-                }
-
-                //The popup window of the marker ("comment y arriver" and "Favoris")
-                popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);
-                ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
-                View viewContainer = getLayoutInflater().inflate(R.layout.default_marker_info_layout, null);
-                TextView tvTitulo = (TextView) viewContainer.findViewById(R.id.tvTitulo);
-                TextView tvCuerpo = (TextView) viewContainer.findViewById(R.id.tvCuerpo);
-                Button directions_button = (Button) viewContainer.findViewById(R.id.direction_buttons);
-                Button favourites_button = (Button) viewContainer.findViewById(R.id.favourites_button);
-
-
-                if (getFavorites().contains(marker.getTitle())){
-                    favourites_button.setText(REMOVE_FROM_FAVORITES);
-                } else {
-                    favourites_button.setText(ADD_TO_FAVORITES);
-                }
-
-
-                tvTitulo.setText(marker.getTitle());
-                tvCuerpo.setVisibility(View.GONE);
-
-                markerInfoContainer.addView(viewContainer);
-
-
-                // adjust the window position
-                mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                mPopupWindow.setBackgroundDrawable(new BitmapDrawable());
-                mPopupWindow.setOutsideTouchable(true);
-                Display display = getWindowManager().getDefaultDisplay();
-                Point size = new Point();
-                display.getSize(size);
-                popupView.measure(size.x, size.y);
-
-
-                mWidth = popupView.getMeasuredWidth();
-                mHeight = popupView.getMeasuredHeight();
-                mMarker = marker;
-
-                updatePopup();
-
-
-                //directions
-                directions_button.setOnClickListener(new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View v) {
-                        getDirections(marker);
-                    }
-                });
-
-                //favourites
-                favourites_button.setOnClickListener(new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View v) {
-                        boolean res = addRemoveFavourites(favourites_button, marker);
-                        if (res){
-                            favourites_button.setText(REMOVE_FROM_FAVORITES);
-                        } else {
-                            favourites_button.setText(ADD_TO_FAVORITES);
-                        }
-                    }
-                });
-
-                return true;
-            }
-        });
-
-    }
-
-    private void initializeUserProfile() {
-        profilePictureV1 = findViewById(R.id.profile_pic_v1);
-
-
-        profilePictureV1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) { pickImage(); }
-        });
-        loadProfilePictureV1();
-        usernameV1 = findViewById(R.id.username_v1);
-
-
-        String username = sharedPreferences.getString("username", "USERNAME");
-        usernameV1.setText(username);
-
-
-        changeUsernameBtn = findViewById(R.id.change_username);
-        changeUsernameBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                createUsernameInputPopup();
             }
         });
     }
 
-    private void createUsernameInputPopup() {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Please enter your username");
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                usernameInput = input.getText().toString();
-                usernameV1.setText(usernameInput);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putString("username", usernameInput);
-                editor.apply();
-            }
-        });
-
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.cancel();
-            }
-        });
-
-        builder.show();
-    }
-
-    private void pickImage() {
-        CropImage.activity().start(this);
-    }
-
+    /**
+     * Override onActivityResult method in activity to get crop result
+     */
     @SuppressLint("MissingSuperCall")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -564,12 +499,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 try {
                     InputStream stream = getContentResolver().openInputStream(resultUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(stream);
-                    profilePictureV1.setImageBitmap(bitmap);
-                    profilePictureV2.setImageBitmap(bitmap);
-
-                    // save picture
-                    String directory = saveProfilePicture(bitmap);
-                    Log.i("test-picture", directory);
+                    userProfile.setBitmap(bitmap);
+                    saveProfilePicture(bitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -579,6 +510,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    /**
+     * Save profile picture to internal storage
+     */
     private String saveProfilePicture(Bitmap bitmapImg) {
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
         File directory = cw.getDir("profile", Context.MODE_PRIVATE);
@@ -600,52 +534,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return directory.getAbsolutePath();
     }
 
-    private boolean loadProfilePictureV1() {
-        try {
-            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-            File directory = cw.getDir("profile", Context.MODE_PRIVATE);
-            String path = directory.getAbsolutePath();
-            File file = new File(path, "profile.png");
-            if (file.exists()) {
-                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-                profilePictureV1.setImageBitmap(bitmap);
-            } else {
-                profilePictureV1.setImageResource(R.drawable.default_profile_pic);
-            }
-            return true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private boolean loadProfilePictureV2() {
-        try {
-            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-            File directory = cw.getDir("profile", Context.MODE_PRIVATE);
-            String path = directory.getAbsolutePath();
-            File file = new File(path, "profile.png");
-            if (file.exists()) {
-                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-                profilePictureV2.setImageBitmap(bitmap);
-            } else {
-                profilePictureV2.setImageResource(R.drawable.default_profile_pic);
-            }
-            return true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
     /**
      *
      */
     private void updateDevicesList() {
-
         Cursor cursor = db.readAllData();
+
         //iterate in the devices list
-
-
         while (cursor.moveToNext()) {
             String addr = cursor.getString(0);
             String name = cursor.getString(1);
@@ -697,7 +592,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             deviceListIcons.set(i, R.drawable.red_heart);
         }
         adapter.notifyDataSetChanged();
-        return db.updateFavorite(marker.getTitle());
+        return db.toggleFavorite(marker.getTitle());
     }
 
     /**
@@ -705,7 +600,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * myPositionMarker needs to be set manually after calling this method
      */
     public void pinDevicesToMap() {
-
         mMap.clear();   // remove all the pins
         if (myPositionMarker != null){
             myPositionMarker = addMarker(MY_POSITION, myPositionMarker.getPosition(), R.drawable.ic_standing_up_man_svgrepo_com);
@@ -721,13 +615,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             double lng = cursor.getDouble(3);
 
             LatLng latLng = addSpaceBetweenDetectedDevices(lat, lng);
-            if (isDarkMode){
+            if (isDarkModeOn){
                 addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com_dark);
             } else {
                 addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com);
             }
         }
-
     }
 
     /**
@@ -758,7 +651,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         while (cursor.moveToNext()) {
             favorites.add(cursor.getString(0));
         }
-
         return favorites;
     }
 

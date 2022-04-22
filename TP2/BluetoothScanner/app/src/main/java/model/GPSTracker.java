@@ -59,10 +59,6 @@ public class GPSTracker implements LocationListener {
         return location;
     }
 
-    public LocationManager getLocationManager() {
-        return locationManager;
-    }
-
     @Override
     public void onLocationChanged(Location location) {
     }

@@ -1,13 +1,24 @@
 <resources>
     <string name="app_name">BluetoothScanner</string>
     <string name="developers">Developers:</string>
+
+    <string name="how_to_arrive">How to Arrive</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="remove_from_favorites">Remove from Favorites</string>
+    <string name="change_username">Change Username</string>
+
     <string name="share">Share</string>
     <string name="swap_theme">Swap Theme</string>
-    <string name="how_to_arrive">How to arrive</string>
     <string name="language">Fr</string>
+
+    <string name="step_label">Steps: </string>
     <string name="step_counter_start">Start</string>
     <string name="step_counter_stop">Stop</string>
     <string name="step_counter_reset">Reset</string>
-    <string name="step_label">Steps: </string>
-    <string name="change_username">Change Username</string>
+
+    <string name="shake_service">Shake Service</string>
+    <string name="shake_start">Start</string>
+    <string name="shake_stop">Stop</string>
+
+    <string name="my_position">My Position</string>
 </resources>
