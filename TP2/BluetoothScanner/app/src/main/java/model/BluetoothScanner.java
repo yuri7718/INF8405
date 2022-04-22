@@ -73,25 +73,11 @@ public class BluetoothScanner {
                         if (!res) {
                             Toast.makeText(context, "Failed to add device to database", Toast.LENGTH_SHORT).show();
                         }
-                        Map<String, String> deviceRecord = createDeviceRecord(address, name, lat, lng, type);
-                        databaseReference.push().setValue(deviceRecord);
-
                     }
                 }
             };
             IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
             context.registerReceiver(mReceiver, filter);
         }
-    }
-
-    private Map<String, String> createDeviceRecord(String address, String name, double lat, double lng, int type) {
-        Map<String, String> deviceRecord = new HashMap<>();
-        deviceRecord.put("address", address);
-        deviceRecord.put("name", name);
-        deviceRecord.put("lat", Double.toString(lat));
-        deviceRecord.put("lng", Double.toString(lng));
-        deviceRecord.put("type", Integer.toString(type));
-        deviceRecord.put("favorite", "0");
-        return deviceRecord;
     }
 }

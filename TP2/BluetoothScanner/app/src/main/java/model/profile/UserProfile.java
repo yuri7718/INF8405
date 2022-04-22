@@ -137,6 +137,7 @@ public class UserProfile {
     public boolean isProfilePicSet() { return this.isProfilePicSet; }
     public Bitmap getBitmap() { return this.bitmap; }
     public void setBitmap(Bitmap bitmap) {
+        isProfilePicSet = true;
         this.bitmap = bitmap;
         profilePictureView.setImageBitmap(bitmap);
     }

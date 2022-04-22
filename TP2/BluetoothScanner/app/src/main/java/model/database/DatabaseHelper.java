@@ -9,6 +9,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Configure SQLite local database
  */
@@ -28,6 +34,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_LNG      = "lng";
     private static final String COLUMN_TYPE     = "type";
     private static final String COLUMN_FAVORITE = "favorite";
+
+    private FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+    private DatabaseReference databaseReference = firebaseDatabase.getReference().child("BluetoothDevices");
 
     public DatabaseHelper(@Nullable Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -56,6 +65,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * Add device to SQL table
      */
     public boolean addDevice(String address, String name, double lat, double lng, int type) {
+        addToFirebase(address, name, lat, lng, type);
+
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
 
@@ -124,8 +135,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // toggle favorite value
         favorite = favorite == 0 ? 1: 0;
-        cv.put(COLUMN_FAVORITE, favorite);
 
+        toggleFavoriteInFirebase(addr, String.valueOf(favorite));
+
+        cv.put(COLUMN_FAVORITE, favorite);
         // update returns the number of rows affected
         int res = db.update(TABLE_NAME, cv, COLUMN_ADDRESS + "=?", new String[] {addr});
         if (res != 1) {
@@ -133,5 +146,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         return favorite == 1;
+    }
+
+    private Map<String, String> createDeviceRecord(String name, double lat, double lng, int type) {
+        Map<String, String> deviceRecord = new HashMap<>();
+        deviceRecord.put("name", name);
+        deviceRecord.put("lat", Double.toString(lat));
+        deviceRecord.put("lng", Double.toString(lng));
+        deviceRecord.put("type", Integer.toString(type));
+        deviceRecord.put("favorite", "0");
+        return deviceRecord;
+    }
+
+    private void addToFirebase(String address, String name, double lat, double lng, int type) {
+        Map<String, String> deviceRecord = createDeviceRecord(name, lat, lng, type);
+        databaseReference.child(address).setValue(deviceRecord);
+    }
+
+    private void toggleFavoriteInFirebase(String addr, String favoriate) {
+        databaseReference.child(addr).child("favorite").setValue(favoriate);
     }
 }
