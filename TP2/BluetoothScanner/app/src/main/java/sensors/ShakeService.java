@@ -1,5 +1,6 @@
 package sensors;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
@@ -9,6 +10,7 @@ import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.TrafficStats;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.util.Log;
@@ -17,6 +19,8 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 
 import com.android.bluetoothscanner.MainActivity;
+
+import java.util.List;
 
 public class ShakeService  implements SensorEventListener {
     private Context context;
@@ -96,8 +100,12 @@ public class ShakeService  implements SensorEventListener {
                     } else {
                         //should check null because in airplane mode it will be null
                         NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
-                        int downSpeed = nc.getLinkDownstreamBandwidthKbps();
-                        int upSpeed = nc.getLinkUpstreamBandwidthKbps();
+                        //int downSpeed = nc.getLinkDownstreamBandwidthKbps();
+                        //int upSpeed = nc.getLinkUpstreamBandwidthKbps();
+                        long[] traffic = networkUsage();
+                        long send = traffic[0]/1024;
+                        long received = traffic[1]/1024;
+
                         int batLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
                         Boolean isCharging = bm.isCharging();
                         if (sharedPreferences.getString("language", "en").equals("fr")){
@@ -105,7 +113,7 @@ public class ShakeService  implements SensorEventListener {
                             if (isCharging){
                                 rep = "Oui";
                             }
-                            Toast.makeText(this.context, "Statistiques: \n Network: \n    Uplink: " + upSpeed + "Kbs Downlink: " + downSpeed + "Kbs"
+                            Toast.makeText(this.context, "Statistiques: \n Network: \n    Uplink: " + send + "KB Downlink: " + received + "KB"
                                             + "\n Batterie: \n    Niveau: " + batLevel + "%\n    Entrain de charger: " + rep +
                                             "\n    Consomation d'energie depuis le debut: " + (initialBatteryLevel - batLevel) + "%"
                                     , Toast.LENGTH_SHORT).show();
@@ -114,7 +122,7 @@ public class ShakeService  implements SensorEventListener {
                             if (isCharging){
                                 rep = "Yes";
                             }
-                            Toast.makeText(this.context, "Statistics: \n Network: \n    Uplink: " + upSpeed + "Kbs Downlink: " + downSpeed + "Kbs"
+                            Toast.makeText(this.context, "Statistics: \n Network: \n    Uplink: " + send + "KB Downlink: " + received + "KB"
                                             + "\n Battery: \n    Level: " + batLevel + "%\n    Charging: " + rep +
                                             "\n    Power consumption from start: " + (initialBatteryLevel - batLevel) + "%"
                                     , Toast.LENGTH_SHORT).show();
@@ -134,5 +142,22 @@ public class ShakeService  implements SensorEventListener {
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
+    }
+
+    private long[] networkUsage() {
+        // get running processes
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> runningApps = manager.getRunningAppProcesses();
+        for (ActivityManager.RunningAppProcessInfo runningApp : runningApps) {
+            String[] packages = runningApp.pkgList;
+            String mypackage = packages[0];
+            Log.i("test-network-received", mypackage);
+            if (mypackage.equals("com.android.bluetoothscanner")) {
+                long sent = TrafficStats.getUidTxBytes(runningApp.uid);
+                long received = TrafficStats.getUidRxBytes(runningApp.uid);
+                return new long[] {sent, received};
+            }
+        }
+        return new long[] {0, 0};
     }
 }
