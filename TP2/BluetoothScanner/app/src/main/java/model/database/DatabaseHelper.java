@@ -1,20 +1,17 @@
-package model;
+package model.database;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Environment;
-import android.widget.TableLayout;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.io.File;
-
+/**
+ * Configure SQLite local database
+ */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private final Context context;
@@ -23,11 +20,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 1;
 
     private static final String TABLE_NAME = "detected_devices";
-    private static final String COLUMN_ADDRESS = "address";
-    private static final String COLUMN_NAME = "name";
-    private static final String COLUMN_LAT = "lat";
-    private static final String COLUMN_LNG = "lng";
-    private static final String COLUMN_TYPE = "type";
+
+    // define column names for SQL table
+    private static final String COLUMN_ADDRESS  = "address";
+    private static final String COLUMN_NAME     = "name";
+    private static final String COLUMN_LAT      = "lat";
+    private static final String COLUMN_LNG      = "lng";
+    private static final String COLUMN_TYPE     = "type";
     private static final String COLUMN_FAVORITE = "favorite";
 
     public DatabaseHelper(@Nullable Context context) {
@@ -53,7 +52,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    void addDevice(String address, String name, double lat, double lng, int type) {
+    /**
+     * Add device to SQL table
+     */
+    public boolean addDevice(String address, String name, double lat, double lng, int type) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
 
@@ -62,13 +64,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COLUMN_LAT, lat);
         cv.put(COLUMN_LNG, lng);
         cv.put(COLUMN_TYPE, type);
-        cv.put(COLUMN_FAVORITE, 0);
+        cv.put(COLUMN_FAVORITE, 0); // set default value to 0
 
-        long result = db.replace(TABLE_NAME, null, cv);
-        if (result == -1) {
-            Toast.makeText(context, "Failed to add device to database", Toast.LENGTH_SHORT).show();
-        }
-
+        // replace returns row id or -1 if an error occurred
+        long res = db.replace(TABLE_NAME, null, cv);
+        return res >= 0;
     }
 
     public Cursor readAllData() {
@@ -93,25 +93,45 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return cursor;
     }
 
-    public boolean updateFavorite(String addr) {
-        String query = "SELECT " + COLUMN_FAVORITE + " FROM " + TABLE_NAME + " WHERE " + COLUMN_ADDRESS + "='" + addr +"';";
+    /**
+     * Giving mac address, set favorite value to 1 if it was 0 or vice versa
+     * Return true if the device is added to favorites else false
+     */
+    @SuppressLint("Recycle")
+    public boolean toggleFavorite(String addr) {
+        // read favorite value
+        String query = "SELECT " + COLUMN_FAVORITE + " FROM " + TABLE_NAME + " WHERE " +
+                COLUMN_ADDRESS + "='" + addr +"';";
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = null;
         int favorite = -1;
+        Cursor cursor = null;
         if (db != null) {
             cursor = db.rawQuery(query, null);
             if (cursor.moveToFirst()) {
                 favorite = cursor.getInt(0);
             }
         }
-        if (favorite == -1) return false;
 
+        // show error if input address is not in the table
+        if (favorite == -1) {
+            Toast.makeText(context, "Failed to get favorite value", Toast.LENGTH_SHORT).show();
+        }
+
+        // change favorite value
         db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
-        favorite = favorite == 0 ? 1: 0;    // toggle favorite value
+
+        // toggle favorite value
+        favorite = favorite == 0 ? 1: 0;
         cv.put(COLUMN_FAVORITE, favorite);
+
+        // update returns the number of rows affected
         int res = db.update(TABLE_NAME, cv, COLUMN_ADDRESS + "=?", new String[] {addr});
+        if (res != 1) {
+            Toast.makeText(context, "Failed to update favorite value", Toast.LENGTH_SHORT).show();
+        }
+
         return favorite == 1;
     }
 }

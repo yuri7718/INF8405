@@ -35,6 +35,7 @@ import android.hardware.SensorListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -53,50 +54,44 @@ public class MainActivity extends AppCompatActivity{
 
     private static final int REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int TIME_OUT = 3000; // wait 3s before showing the main view of the application
-    private ShakeService mShakeService;
 
+    private static final String SHARED_PREFERENCES = "sharedPrefs";
+    private static final String DARK_MODE = "isDarkModeOn";
+    private static final String LANGUAGE = "language";
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SharedPreferences sharedPreferences
-                = getSharedPreferences(
-                "sharedPrefs", MODE_PRIVATE);
-        final boolean isDarkModeOn
-                = sharedPreferences
-                .getBoolean(
-                        "isDarkModeOn", false);
-        if(isDarkModeOn){
-            AppCompatDelegate
-                    .setDefaultNightMode(
-                            AppCompatDelegate
-                                    .MODE_NIGHT_YES);
+
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+
+        // get theme, default is false
+        boolean isDarkModeOn = sharedPreferences.getBoolean(DARK_MODE, false);
+        if (isDarkModeOn) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         } else {
-            AppCompatDelegate
-                    .setDefaultNightMode(
-                            AppCompatDelegate
-                                    .MODE_NIGHT_NO);
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
 
-        String languageCode
-                = sharedPreferences
-                .getString(
-                        "language", "en");
-
-        final SharedPreferences.Editor editor
-                = sharedPreferences.edit();
-        editor.putString(
-                "language", languageCode);
-        editor.apply();
+        // get language code, default is en
+        String languageCode = sharedPreferences.getString(LANGUAGE, "en");
+        Log.i("test-language", languageCode);
+        /*
         Locale locale = new Locale(languageCode);
         Locale.setDefault(locale);
         Resources resources = getResources();
         Configuration config = resources.getConfiguration();
         config.setLocale(locale);
         resources.updateConfiguration(config, resources.getDisplayMetrics());
-
-
+        */
+        /*
+        Resources res = getResources();
+        DisplayMetrics dm = res.getDisplayMetrics();
+        android.content.res.Configuration conf = res.getConfiguration();
+        conf.setLocale(new Locale(languageCode.toLowerCase()));
+        res.updateConfiguration(conf, dm);
+        */
         setContentView(R.layout.activity_main);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -106,7 +101,6 @@ public class MainActivity extends AppCompatActivity{
         } else {
             startMapsActivity();
         }
-        mShakeService = new ShakeService(this);
     }
 
     private boolean checkCameraPermission() {
@@ -177,16 +171,7 @@ public class MainActivity extends AppCompatActivity{
         super.onPointerCaptureChanged(hasCapture);
     }
 
-    @Override
-    protected void onResume() {
-        mShakeService.register();
-        super.onResume();
-    }
-    @Override
-    protected void onPause() {
-        mShakeService.unregister();
-        super.onPause();
-    }
+
 
 
 }

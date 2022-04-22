@@ -71,8 +71,8 @@ import java.util.Map;
 import java.util.Random;
 
 import model.BluetoothScanner;
-import model.DatabaseHelper;
-import model.DeviceAdapter;
+import model.database.DatabaseHelper;
+import model.device.DeviceAdapter;
 import model.GPSTracker;
 import model.GoogleDirections;
 import sensors.ShakeService;
@@ -697,7 +697,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             deviceListIcons.set(i, R.drawable.red_heart);
         }
         adapter.notifyDataSetChanged();
-        return db.updateFavorite(marker.getTitle());
+        return db.toggleFavorite(marker.getTitle());
     }
 
     /**

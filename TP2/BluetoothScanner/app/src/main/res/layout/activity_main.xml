@@ -18,7 +18,7 @@
         app:srcCompat="@drawable/logo" />
 
     <TextView
-        android:id="@+id/appName"
+        android:id="@+id/app_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/mainBackground"
@@ -42,7 +42,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <TextView
-            android:id="@+id/textView1"
+            android:id="@+id/developers"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/mainBackground"

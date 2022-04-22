@@ -30,7 +30,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="7dp"
+                    android:layout_marginEnd="5dp"
                     android:layout_weight="4"
                     android:orientation="vertical">
 
@@ -67,7 +67,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/step_counter_start"
-                            android:textSize="10sp" />
+                            android:textSize="9sp" />
 
                         <Button
                             android:id="@+id/step_counter_stop"
@@ -75,7 +75,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/step_counter_stop"
-                            android:textSize="10sp" />
+                            android:textSize="9sp" />
 
                         <Button
                             android:id="@+id/step_counter_reset"
@@ -83,14 +83,14 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/step_counter_reset"
-                            android:textSize="10sp" />
+                            android:textSize="9sp" />
                     </LinearLayout>
                 </LinearLayout><!-- end step counter service layout -->
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="7dp"
+                    android:layout_marginStart="5dp"
                     android:layout_weight="6"
                     android:orientation="vertical">
 
