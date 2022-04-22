@@ -30,9 +30,6 @@ public class BluetoothScanner {
     private final BluetoothAdapter bluetoothAdapter;
     private final DatabaseHelper db;
 
-    private FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-    private DatabaseReference databaseReference = firebaseDatabase.getReference().child("BluetoothDevices");
-
     public BluetoothScanner(Context context) {
         this.context = context;
         this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -57,23 +54,23 @@ public class BluetoothScanner {
                 @SuppressLint("MissingPermission")
                 public void onReceive(Context context, Intent intent) {
 
-                    if (BluetoothDevice.ACTION_FOUND.equals(intent.getAction())) {
+                if (BluetoothDevice.ACTION_FOUND.equals(intent.getAction())) {
 
-                        // Discovery has found a device
-                        // Get BluetoothDevice object and its info from the Intent
-                        BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    // Discovery has found a device
+                    // Get BluetoothDevice object and its info from the Intent
+                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-                        String address = device.getAddress();
-                        String name = device.getName();
-                        int type = device.getType();
-                        double lat = latLng.latitude;
-                        double lng = latLng.longitude;
+                    String address = device.getAddress();
+                    String name = device.getName();
+                    int type = device.getType();
+                    double lat = latLng.latitude;
+                    double lng = latLng.longitude;
 
-                        boolean res = db.addDevice(address, name, lat, lng, type);
-                        if (!res) {
-                            Toast.makeText(context, "Failed to add device to database", Toast.LENGTH_SHORT).show();
-                        }
+                    boolean res = db.addDevice(address, name, lat, lng, type);
+                    if (!res) {
+                        Toast.makeText(context, "Failed to add device to database", Toast.LENGTH_SHORT).show();
                     }
+                }
                 }
             };
             IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);

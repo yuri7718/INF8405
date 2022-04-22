@@ -174,10 +174,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         db = new DatabaseHelper(this);
 
         bluetoothScanner = new BluetoothScanner(this);
-        if (mLocation == null){
+        if (mLocation == null) {
             mLocation = gpsTracker.getLocation();
         }
-        if( mLocation != null){
+        if (mLocation != null) {
             bluetoothScanner.scan(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
         }
 
@@ -438,6 +438,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Button direction_button = viewContainer.findViewById(R.id.direction_buttons);
                     Button favourites_button = viewContainer.findViewById(R.id.favourites_button);
 
+                    // set text to favorites_button
                     if (getFavorites().contains(marker.getTitle())) {
                         favourites_button.setText(getResources().getString(R.string.remove_from_favorites));
                     } else {
@@ -453,7 +454,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Point size = new Point();
                     display.getSize(size);
                     popupView.measure(size.x, size.y);
-
 
                     mWidth = popupView.getMeasuredWidth();
                     mHeight = popupView.getMeasuredHeight();
@@ -535,7 +535,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     *
+     * Get data from SQLite and update the list of devices
      */
     private void updateDevicesList() {
         Cursor cursor = db.readAllData();
@@ -550,8 +550,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             int favorite = cursor.getInt(5);
 
             String pos = lat + " " + lng;
+            // device already in list
             if (indices.containsKey(addr)) {
                 int i = indices.get(addr);
+                // set positions to new values
                 deviceListPositions.set(i, pos);
                 if (favorite == 0) {
                     deviceListIcons.set(i,R.drawable.white_heart);
@@ -576,14 +578,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     deviceListIcons.add(R.drawable.red_heart);
                 }
             }
-
         }
         adapter.notifyDataSetChanged();
         //add markers to the map
         pinDevicesToMap();
     }
 
-
+    /**
+     * Change the heart icon when a device is added or removed from favorites
+     */
     private boolean addRemoveFavourites(Button button, Marker marker) {
         int i = indices.get(marker.getTitle());
         if (deviceListIcons.get(i) == R.drawable.red_heart) {
@@ -615,7 +618,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             double lng = cursor.getDouble(3);
 
             LatLng latLng = addSpaceBetweenDetectedDevices(lat, lng);
-            if (isDarkModeOn){
+            if (isDarkModeOn) {
                 addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com_dark);
             } else {
                 addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com);
