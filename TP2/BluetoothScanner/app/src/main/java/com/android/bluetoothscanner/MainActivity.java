@@ -1,5 +1,7 @@
 package com.android.bluetoothscanner;
 
+import static language.LocaleHelper.updateLanguage;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -7,48 +9,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
-
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
-
-
-import android.app.Dialog;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.le.BluetoothLeScanner;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorListener;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-
-import java.util.Locale;
-import java.util.Set;
-
-import model.BluetoothScanner;
-import sensors.ShakeService;
 
 public class MainActivity extends AppCompatActivity{
 
@@ -76,33 +46,24 @@ public class MainActivity extends AppCompatActivity{
 
         // get language code, default is en
         String languageCode = sharedPreferences.getString(LANGUAGE, "en");
-        Log.i("test-language", languageCode);
-        /*
-        Locale locale = new Locale(languageCode);
-        Locale.setDefault(locale);
-        Resources resources = getResources();
-        Configuration config = resources.getConfiguration();
-        config.setLocale(locale);
-        resources.updateConfiguration(config, resources.getDisplayMetrics());
-        */
-        /*
-        Resources res = getResources();
-        DisplayMetrics dm = res.getDisplayMetrics();
-        android.content.res.Configuration conf = res.getConfiguration();
-        conf.setLocale(new Locale(languageCode.toLowerCase()));
-        res.updateConfiguration(conf, dm);
-        */
+        updateLanguage(this, languageCode);
+
         setContentView(R.layout.activity_main);
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestLocationPermission();
-        } else if (checkCameraPermission()) {
+        // verify permissions
+        if (!checkCameraPermission()) {
             requestCameraPermission();
+        }
+        if (!checkLocationPermission()) {
+            requestLocationPermission();
         } else {
             startMapsActivity();
         }
     }
 
+    /**
+     * Verify camera and write external storage permission
+     */
     private boolean checkCameraPermission() {
         boolean res1 = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
@@ -111,44 +72,41 @@ public class MainActivity extends AppCompatActivity{
         return res1 && res2;
     }
 
+    /**
+     * Request camera and write external storage permission
+     */
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void requestCameraPermission() {
         requestPermissions(new String[]{ Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
     }
 
-    private void startMapsActivity() {
-        /**
-         * start MapsActivity
-         */
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent mapsActivityIntent = new Intent(MainActivity.this, MapsActivity.class);
-                startActivity(mapsActivityIntent);
-            }
-        }, TIME_OUT);
+    /**
+     * Verify location permission
+     */
+    private boolean checkLocationPermission() {
+        return ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
-
+    /**
+     * Show dialog to request location permission
+     */
     private void requestLocationPermission() {
-        /**
-         * Show dialog to request location permission
-         */
-
         new AlertDialog.Builder(this)
             .setTitle("Permission needed")
             .setMessage("This permission is needed")
-            .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     ActivityCompat.requestPermissions(MainActivity.this,
                         new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_ACCESS_FINE_LOCATION);
                 }
             })
-            .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.dismiss();
+                    MainActivity.this.finishAffinity();
                 }
             }).create().show();
     }
@@ -162,16 +120,23 @@ public class MainActivity extends AppCompatActivity{
                 startMapsActivity();
             } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
+                MainActivity.this.finishAffinity();
             }
         }
     }
 
-    @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-        super.onPointerCaptureChanged(hasCapture);
+    /**
+     * Start MapsActivity
+     */
+    private void startMapsActivity() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent mapsActivityIntent = new Intent(MainActivity.this, MapsActivity.class);
+                startActivity(mapsActivityIntent);
+                finish();
+            }
+        }, TIME_OUT);
     }
-
-
-
 
 }

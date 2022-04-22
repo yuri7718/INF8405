@@ -1,6 +1,9 @@
 package com.android.bluetoothscanner;
 
 
+
+import static language.LocaleHelper.updateLanguage;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -120,11 +123,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private Button shareBtn;
     private Button swapTheme;
-    private boolean isDarkMode;
+
     private ShakeService mShakeService;
     private StepCounterService mStepCounterService;
-    private SharedPreferences sharedPreferences;
 
+    /**
+     * Shared preferences
+     */
+    private SharedPreferences sharedPreferences;
+    private static final String SHARED_PREFERENCES = "sharedPrefs";
+    private static final String DARK_MODE = "isDarkModeOn";
+    private static final String LANGUAGE = "language";
+
+    private boolean isDarkModeOn = false;
+    private String languageCode = "en";
+    private String defaultUsername = "USERNAME";
 
     ImageView profilePictureV1;
     ImageView profilePictureV2;
@@ -143,12 +156,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Dark Mode Activation
-        sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        this.isDarkMode
-                = sharedPreferences
-                .getBoolean(
-                        "isDarkModeOn", false);
+
+        // Dark Mode Activation
+        sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+        this.isDarkModeOn = sharedPreferences.getBoolean(DARK_MODE, false);
         setContentView(R.layout.activity_maps);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -162,7 +173,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
-        adapter = new DeviceAdapter(this, isDarkMode, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
+        adapter = new DeviceAdapter(this, isDarkModeOn, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
         deviceListView.setAdapter(adapter);
 
 
@@ -188,38 +199,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 share();
             }
         });
-        //Swap Theme config
 
+        // toggle theme
         swapTheme.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Saving state of our app
-                // using SharedPreferences
-                SharedPreferences sharedPreferences
-                        = getSharedPreferences(
-                        "sharedPrefs", MODE_PRIVATE);
-                final SharedPreferences.Editor editor
-                        = sharedPreferences.edit();
-                final boolean isDarkModeOn
-                        = sharedPreferences
-                        .getBoolean(
-                                "isDarkModeOn", false);
-                if(isDarkModeOn){
-                    editor.putBoolean(
-                            "isDarkModeOn", false);
-                    editor.apply();
-                    AppCompatDelegate
-                            .setDefaultNightMode(
-                                    AppCompatDelegate
-                                            .MODE_NIGHT_NO);
+                // save state of our app using SharedPreferences
+                boolean isDarkModeOn = sharedPreferences.getBoolean(DARK_MODE, false);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean(DARK_MODE, !isDarkModeOn);
+                editor.apply();
+
+                if (isDarkModeOn) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 } else {
-                    editor.putBoolean(
-                            "isDarkModeOn", true);
-                    editor.apply();
-                    AppCompatDelegate
-                            .setDefaultNightMode(
-                                    AppCompatDelegate
-                                            .MODE_NIGHT_YES);
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                 }
             }
         });
@@ -230,19 +224,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             REMOVE_FROM_FAVORITES = "Retirer des favoris";
         }
 
-        // setting up on click listener event over the button
-        // in order to change the language with the help of
-        // LocaleHelper class
+
+
+        // update language based on language code
+        // language code is either en or fr
+        // the default language code is en
         languageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String languageCode = "en";
-                if (languageBtn.getText().equals("Fr")){
-                    languageCode = "fr";
-                }
-                updateLanguage(languageCode);
+                String languageCode = languageBtn.getText().toString().toLowerCase();
+                updateLanguage(MapsActivity.this, languageCode);
+
+                // save language code
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(LANGUAGE, languageCode);
+                editor.apply();
+
+                // refresh and destroy current activity
+                Intent refresh = new Intent(MapsActivity.this, MapsActivity.class);
+                startActivity(refresh);
+                finish();
             }
         });
+
         initializeStepCounter();
         initializeUserProfile();
 
@@ -280,21 +284,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private void updateLanguage(String languageCode) {
-        final SharedPreferences.Editor editor
-                = sharedPreferences.edit();
-        editor.putString(
-                "language", languageCode);
+    /**
+     * update language based on language code
+     * language code is either en or fr
+     * the default language code is en
+     */
+    private void updateLanguage2(String languageCode) {
+        languageCode = languageCode.toLowerCase();
+
+        // save language code using shared preferences
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(LANGUAGE, languageCode);
         editor.apply();
+
+        // update language
         Locale locale = new Locale(languageCode);
         Locale.setDefault(locale);
         Resources resources = getResources();
         Configuration config = resources.getConfiguration();
         config.setLocale(locale);
         resources.updateConfiguration(config, resources.getDisplayMetrics());
-        Intent intent = getIntent();
+
+        // refresh and destroy current activity
+        Intent refresh = new Intent(MapsActivity.this, MapsActivity.class);
+        startActivity(refresh);
         finish();
-        startActivity(intent);
     }
 
     @Override
@@ -721,7 +735,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             double lng = cursor.getDouble(3);
 
             LatLng latLng = addSpaceBetweenDetectedDevices(lat, lng);
-            if (isDarkMode){
+            if (isDarkModeOn){
                 addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com_dark);
             } else {
                 addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com);
