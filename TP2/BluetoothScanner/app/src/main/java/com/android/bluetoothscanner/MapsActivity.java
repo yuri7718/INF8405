@@ -78,6 +78,7 @@ import model.database.DatabaseHelper;
 import model.device.DeviceAdapter;
 import model.GPSTracker;
 import model.GoogleDirections;
+import model.profile.UserProfile;
 import sensors.ShakeService;
 import sensors.StepCounterService;
 
@@ -122,8 +123,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleDirections mGoogleDirections;
 
     private Button shareBtn;
-    private Button swapTheme;
+    private Button swapThemeBtn;
+    private Button languageBtn;
 
+    /**
+     * Sensor services
+     */
     private ShakeService mShakeService;
     private StepCounterService mStepCounterService;
 
@@ -134,48 +139,43 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String SHARED_PREFERENCES = "sharedPrefs";
     private static final String DARK_MODE = "isDarkModeOn";
     private static final String LANGUAGE = "language";
+    private static final String USERNAME = "username";
 
     private boolean isDarkModeOn = false;
-    private String languageCode = "en";
-    private String defaultUsername = "USERNAME";
-
-    ImageView profilePictureV1;
-    ImageView profilePictureV2;
-    TextView usernameV1;
-    TextView usernameV2;
-    Button changeUsernameBtn;
-    private String usernameInput = "";
-
-    TextView stepCounterSteps;
-    Button stepCounterStartBtn;
-    Button stepCounterStopBtn;
-    Button stepCounterResetBtn;
-
+    private UserProfile userProfile;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Dark Mode Activation
         sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
-        this.isDarkModeOn = sharedPreferences.getBoolean(DARK_MODE, false);
-        setContentView(R.layout.activity_maps);
 
+        // get theme, default is false
+        sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+        isDarkModeOn = sharedPreferences.getBoolean(DARK_MODE, false);
+        if (isDarkModeOn) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
+        // get language code, default is en
+        String languageCode = sharedPreferences.getString(LANGUAGE, "en");
+        updateLanguage(this, languageCode);
+
+        setContentView(R.layout.activity_maps);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         // get current location
         gpsTracker = new GPSTracker(getApplicationContext());
         mLocation = gpsTracker.getLocation();
-        mShakeService = new ShakeService(this);
-
 
         // define deviceListView and adapter
         deviceListView = (ListView) findViewById(R.id.device_list);
         adapter = new DeviceAdapter(this, isDarkModeOn, deviceListMacAddresses, deviceListNames, deviceListIcons, deviceListTypes, deviceListPositions);
         deviceListView.setAdapter(adapter);
-
 
         // initialize database
         db = new DatabaseHelper(this);
@@ -190,9 +190,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mGoogleDirections = null;
 
+        initializeButtons();
+        initializeShakeService();
+        initializeStepCounter();
+        //initializeUserProfile();
+        userProfile = new UserProfile(this);
+    }
+
+    /**
+     * Initialize share, swap theme, and language
+     */
+    private void initializeButtons() {
         shareBtn = findViewById(R.id.share);
-        Button languageBtn = findViewById(R.id.language);
-        swapTheme = findViewById(R.id.swap_theme);
+        swapThemeBtn = findViewById(R.id.swap_theme);
+        languageBtn = findViewById(R.id.language);
+
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -201,30 +213,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         // toggle theme
-        swapTheme.setOnClickListener(new View.OnClickListener() {
+        swapThemeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // save state of our app using SharedPreferences
-                boolean isDarkModeOn = sharedPreferences.getBoolean(DARK_MODE, false);
+                boolean darkMode = sharedPreferences.getBoolean(DARK_MODE, false);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean(DARK_MODE, !isDarkModeOn);
+                editor.putBoolean(DARK_MODE, !darkMode);
                 editor.apply();
 
-                if (isDarkModeOn) {
+                // change theme
+                if (darkMode) {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 } else {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                 }
             }
         });
-
-        //change language
-        if (sharedPreferences.getString("language", "en").equals("fr")){
-            ADD_TO_FAVORITES = "Ajouter aux favoris";
-            REMOVE_FROM_FAVORITES = "Retirer des favoris";
-        }
-
-
 
         // update language based on language code
         // language code is either en or fr
@@ -246,21 +251,41 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 finish();
             }
         });
-
-        initializeStepCounter();
-        initializeUserProfile();
-
     }
 
+    /**
+     * Initialize shake service
+     */
+    private void initializeShakeService() {
+        Button shakeStartBtn = findViewById(R.id.shake_start);
+        Button shakeStopBtn = findViewById(R.id.shake_stop);
+
+        mShakeService = new ShakeService(this);
+
+        shakeStartBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mShakeService.register();
+            }
+        });
+
+        shakeStopBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mShakeService.unregister();
+            }
+        });
+    }
+
+    /**
+     * Initialize step counter service
+     */
     private void initializeStepCounter() {
-        stepCounterStartBtn = findViewById(R.id.step_counter_start);
-        stepCounterStopBtn = findViewById(R.id.step_counter_stop);
-        stepCounterResetBtn = findViewById(R.id.step_counter_reset);
+        Button stepCounterStartBtn = findViewById(R.id.step_counter_start);
+        Button stepCounterStopBtn = findViewById(R.id.step_counter_stop);
+        Button stepCounterResetBtn = findViewById(R.id.step_counter_reset);
 
         mStepCounterService = new StepCounterService(this);
-
-
-        stepCounterSteps = findViewById(R.id.step_count);
 
         stepCounterStartBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -284,47 +309,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    /**
-     * update language based on language code
-     * language code is either en or fr
-     * the default language code is en
-     */
-    private void updateLanguage2(String languageCode) {
-        languageCode = languageCode.toLowerCase();
-
-        // save language code using shared preferences
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(LANGUAGE, languageCode);
-        editor.apply();
-
-        // update language
-        Locale locale = new Locale(languageCode);
-        Locale.setDefault(locale);
-        Resources resources = getResources();
-        Configuration config = resources.getConfiguration();
-        config.setLocale(locale);
-        resources.updateConfiguration(config, resources.getDisplayMetrics());
-
-        // refresh and destroy current activity
-        Intent refresh = new Intent(MapsActivity.this, MapsActivity.class);
-        startActivity(refresh);
-        finish();
-    }
-
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        //LocaleManager.setLocale(this);
     }
 
     @Override
     protected void onResume() {
-        mShakeService.register();
         super.onResume();
     }
+
     @Override
     protected void onPause() {
-        mShakeService.unregister();
         super.onPause();
     }
 
@@ -343,8 +339,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
 
-        final Handler hanlder = new Handler();
-        hanlder.postDelayed(new Runnable() {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 updateDevicesList();
@@ -376,19 +372,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             @Override
-            public void onProviderEnabled(@NonNull String provider) {
-
-            }
+            public void onProviderEnabled(@NonNull String provider) { }
 
             @Override
-            public void onProviderDisabled(@NonNull String provider) {
-
-            }
+            public void onProviderDisabled(@NonNull String provider) { }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
+            public void onStatusChanged(String provider, int status, Bundle extras) { }
         };
         //some devices using WIFI don't support GPS
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -408,13 +398,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
                     View viewContainer = getLayoutInflater().inflate(R.layout.user_info_layout, null);
 
-                    String username = sharedPreferences.getString("username", "USERNAME");
-                    Log.i("test-profile", username);
-                    usernameV2 = viewContainer.findViewById(R.id.username_v2);
-                    usernameV2.setText(username);
+                    String username = sharedPreferences.getString(USERNAME, "USERNAME");
+                    TextView usernameView = viewContainer.findViewById(R.id.username_v2);
+                    usernameView.setText(username);
 
-                    profilePictureV2 = viewContainer.findViewById(R.id.profile_pic_v2);
-                    loadProfilePictureV2();
+                    ImageView profilePictureView = viewContainer.findViewById(R.id.profile_pic_v2);
+                    if (userProfile.isProfilePicSet()) {
+                        profilePictureView.setImageBitmap(userProfile.getBitmap());
+                    } else {
+                        profilePictureView.setImageResource(R.drawable.default_profile_pic);
+                    }
 
                     markerInfoContainer.addView(viewContainer);
 
@@ -427,13 +420,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     display.getSize(size);
                     popupView.measure(size.x, size.y);
 
-
                     mWidth = popupView.getMeasuredWidth();
                     mHeight = popupView.getMeasuredHeight();
                     mMarker = marker;
 
                     updatePopup();
-
                     return true;
                 }
 
@@ -510,64 +501,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void initializeUserProfile() {
-        profilePictureV1 = findViewById(R.id.profile_pic_v1);
-
-
-        profilePictureV1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) { pickImage(); }
-        });
-        loadProfilePictureV1();
-        usernameV1 = findViewById(R.id.username_v1);
-
-
-        String username = sharedPreferences.getString("username", "USERNAME");
-        usernameV1.setText(username);
-
-
-        changeUsernameBtn = findViewById(R.id.change_username);
-        changeUsernameBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                createUsernameInputPopup();
-            }
-        });
-    }
-
-    private void createUsernameInputPopup() {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Please enter your username");
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                usernameInput = input.getText().toString();
-                usernameV1.setText(usernameInput);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putString("username", usernameInput);
-                editor.apply();
-            }
-        });
-
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.cancel();
-            }
-        });
-
-        builder.show();
-    }
-
-    private void pickImage() {
-        CropImage.activity().start(this);
-    }
-
+    /**
+     * Override onActivityResult method in activity to get crop result
+     */
     @SuppressLint("MissingSuperCall")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -578,12 +514,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 try {
                     InputStream stream = getContentResolver().openInputStream(resultUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(stream);
-                    profilePictureV1.setImageBitmap(bitmap);
-                    profilePictureV2.setImageBitmap(bitmap);
-
-                    // save picture
-                    String directory = saveProfilePicture(bitmap);
-                    Log.i("test-picture", directory);
+                    userProfile.setBitmap(bitmap);
+                    saveProfilePicture(bitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -593,6 +525,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    /**
+     * Save profile picture to internal storage
+     */
     private String saveProfilePicture(Bitmap bitmapImg) {
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
         File directory = cw.getDir("profile", Context.MODE_PRIVATE);
@@ -614,43 +549,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return directory.getAbsolutePath();
     }
 
-    private boolean loadProfilePictureV1() {
-        try {
-            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-            File directory = cw.getDir("profile", Context.MODE_PRIVATE);
-            String path = directory.getAbsolutePath();
-            File file = new File(path, "profile.png");
-            if (file.exists()) {
-                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-                profilePictureV1.setImageBitmap(bitmap);
-            } else {
-                profilePictureV1.setImageResource(R.drawable.default_profile_pic);
-            }
-            return true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private boolean loadProfilePictureV2() {
-        try {
-            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-            File directory = cw.getDir("profile", Context.MODE_PRIVATE);
-            String path = directory.getAbsolutePath();
-            File file = new File(path, "profile.png");
-            if (file.exists()) {
-                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-                profilePictureV2.setImageBitmap(bitmap);
-            } else {
-                profilePictureV2.setImageResource(R.drawable.default_profile_pic);
-            }
-            return true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
     /**
      *
      */
