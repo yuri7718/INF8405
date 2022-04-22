@@ -105,7 +105,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     DeviceAdapter adapter;
 
     DatabaseHelper db;
-    Map<String, Map> deviceList = new HashMap<>();
 
     private static final String MY_POSITION = "My Position";
     private Marker myPositionMarker;
@@ -117,14 +116,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int mHeight;
     private View popupView;
 
-    private static String ADD_TO_FAVORITES = "Add to favourites";
-    private static String REMOVE_FROM_FAVORITES = "Remove from favourites";
-
     private GoogleDirections mGoogleDirections;
 
-    private Button shareBtn;
-    private Button swapThemeBtn;
-    private Button languageBtn;
 
     /**
      * Sensor services
@@ -193,7 +186,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         initializeButtons();
         initializeShakeService();
         initializeStepCounter();
-        //initializeUserProfile();
         userProfile = new UserProfile(this);
     }
 
@@ -201,9 +193,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Initialize share, swap theme, and language
      */
     private void initializeButtons() {
-        shareBtn = findViewById(R.id.share);
-        swapThemeBtn = findViewById(R.id.swap_theme);
-        languageBtn = findViewById(R.id.language);
+        Button shareBtn = findViewById(R.id.share);
+        Button swapThemeBtn = findViewById(R.id.swap_theme);
+        Button languageBtn = findViewById(R.id.language);
 
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -348,13 +340,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }, MIN_TIME);
 
 
-        if (mLocation == null){
+        if (mLocation == null) {
             mLocation = gpsTracker.getLocation();
         }
-        if( mLocation != null) {
+        if (mLocation != null) {
             LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
 
-            if(myPositionMarker!= null){
+            if (myPositionMarker != null) {
                 myPositionMarker.remove();
             }
             myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
@@ -365,7 +357,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onLocationChanged(Location location) {
                 updateDevicesList();
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                if(myPositionMarker!= null){
+                if (myPositionMarker != null){
                     myPositionMarker.remove();
                 }
                 myPositionMarker = addMarker(MY_POSITION, latLng, R.drawable.ic_standing_up_man_svgrepo_com);
@@ -380,7 +372,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) { }
         };
-        //some devices using WIFI don't support GPS
+
+        // some devices using WIFI don't support GPS
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DIST, locationListener);
@@ -391,16 +384,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                
+
+                if (mPopupWindow != null) {
+                    mPopupWindow.dismiss();
+                }
+
                 if (marker.getTitle().equals(MY_POSITION)) {
 
                     popupView = getLayoutInflater().inflate(R.layout.user_info_window, null);
                     ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
                     View viewContainer = getLayoutInflater().inflate(R.layout.user_info_layout, null);
 
-                    String username = sharedPreferences.getString(USERNAME, "USERNAME");
                     TextView usernameView = viewContainer.findViewById(R.id.username_v2);
-                    usernameView.setText(username);
+                    if (userProfile.isUsernameSet()) {
+                        usernameView.setText(userProfile.getUsername());
+                    } else {
+                        usernameView.setText("USERNAME");
+                    }
 
                     ImageView profilePictureView = viewContainer.findViewById(R.id.profile_pic_v2);
                     if (userProfile.isProfilePicSet()) {
@@ -412,8 +412,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     markerInfoContainer.addView(viewContainer);
 
                     // adjust the window position
-                    mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    mPopupWindow.setBackgroundDrawable(new BitmapDrawable());
+                    mPopupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     mPopupWindow.setOutsideTouchable(true);
                     Display display = getWindowManager().getDefaultDisplay();
                     Point size = new Point();
@@ -426,79 +425,65 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     updatePopup();
                     return true;
-                }
-
-                if (mPopupWindow != null) {
-                    mPopupWindow.dismiss();
-                }
-
-                //The popup window of the marker ("comment y arriver" and "Favoris")
-                popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);
-                ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
-                View viewContainer = getLayoutInflater().inflate(R.layout.default_marker_info_layout, null);
-                TextView tvTitulo = (TextView) viewContainer.findViewById(R.id.tvTitulo);
-                TextView tvCuerpo = (TextView) viewContainer.findViewById(R.id.tvCuerpo);
-                Button directions_button = (Button) viewContainer.findViewById(R.id.direction_buttons);
-                Button favourites_button = (Button) viewContainer.findViewById(R.id.favourites_button);
-
-
-                if (getFavorites().contains(marker.getTitle())){
-                    favourites_button.setText(REMOVE_FROM_FAVORITES);
                 } else {
-                    favourites_button.setText(ADD_TO_FAVORITES);
-                }
 
+                    // popup window of the marker ("comment y arriver" and "favoris")
+                    popupView = getLayoutInflater().inflate(R.layout.default_marker_info_window, null);
+                    ViewFlipper markerInfoContainer = (ViewFlipper) popupView.findViewById(R.id.markerInfoContainer);
+                    View viewContainer = getLayoutInflater().inflate(R.layout.default_marker_info_layout, null);
 
-                tvTitulo.setText(marker.getTitle());
-                tvCuerpo.setVisibility(View.GONE);
+                    TextView macAddrView = viewContainer.findViewById(R.id.address_on_pin);
+                    macAddrView.setText(marker.getTitle());
 
-                markerInfoContainer.addView(viewContainer);
+                    Button direction_button = viewContainer.findViewById(R.id.direction_buttons);
+                    Button favourites_button = viewContainer.findViewById(R.id.favourites_button);
 
-
-                // adjust the window position
-                mPopupWindow= new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                mPopupWindow.setBackgroundDrawable(new BitmapDrawable());
-                mPopupWindow.setOutsideTouchable(true);
-                Display display = getWindowManager().getDefaultDisplay();
-                Point size = new Point();
-                display.getSize(size);
-                popupView.measure(size.x, size.y);
-
-
-                mWidth = popupView.getMeasuredWidth();
-                mHeight = popupView.getMeasuredHeight();
-                mMarker = marker;
-
-                updatePopup();
-
-
-                //directions
-                directions_button.setOnClickListener(new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View v) {
-                        getDirections(marker);
+                    if (getFavorites().contains(marker.getTitle())) {
+                        favourites_button.setText(getResources().getString(R.string.remove_from_favorites));
+                    } else {
+                        favourites_button.setText(getResources().getString(R.string.add_to_favorites));
                     }
-                });
 
-                //favourites
-                favourites_button.setOnClickListener(new View.OnClickListener() {
+                    markerInfoContainer.addView(viewContainer);
 
-                    @Override
-                    public void onClick(View v) {
-                        boolean res = addRemoveFavourites(favourites_button, marker);
-                        if (res){
-                            favourites_button.setText(REMOVE_FROM_FAVORITES);
-                        } else {
-                            favourites_button.setText(ADD_TO_FAVORITES);
+                    // adjust the window position
+                    mPopupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    mPopupWindow.setOutsideTouchable(true);
+                    Display display = getWindowManager().getDefaultDisplay();
+                    Point size = new Point();
+                    display.getSize(size);
+                    popupView.measure(size.x, size.y);
+
+
+                    mWidth = popupView.getMeasuredWidth();
+                    mHeight = popupView.getMeasuredHeight();
+                    mMarker = marker;
+                    updatePopup();
+
+                    // directions
+                    direction_button.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            getDirections(marker);
                         }
-                    }
-                });
+                    });
 
-                return true;
+                    // favourites
+                    favourites_button.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            boolean res = addRemoveFavourites(favourites_button, marker);
+                            if (res) {
+                                favourites_button.setText(getResources().getString(R.string.remove_from_favorites));
+                            } else {
+                                favourites_button.setText(getResources().getString(R.string.add_to_favorites));
+                            }
+                        }
+                    });
+                    return true;
+                }
             }
         });
-
     }
 
     /**
@@ -553,11 +538,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      *
      */
     private void updateDevicesList() {
-
         Cursor cursor = db.readAllData();
+
         //iterate in the devices list
-
-
         while (cursor.moveToNext()) {
             String addr = cursor.getString(0);
             String name = cursor.getString(1);
@@ -617,7 +600,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * myPositionMarker needs to be set manually after calling this method
      */
     public void pinDevicesToMap() {
-
         mMap.clear();   // remove all the pins
         if (myPositionMarker != null){
             myPositionMarker = addMarker(MY_POSITION, myPositionMarker.getPosition(), R.drawable.ic_standing_up_man_svgrepo_com);
@@ -639,7 +621,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 addMarker(addr, latLng, R.drawable.ic_pushpin_svgrepo_com);
             }
         }
-
     }
 
     /**
@@ -670,7 +651,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         while (cursor.moveToNext()) {
             favorites.add(cursor.getString(0));
         }
-
         return favorites;
     }
 

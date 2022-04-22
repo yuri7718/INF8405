@@ -39,7 +39,8 @@ public class UserProfile {
 
     private TextView usernameView;
     private Button changeUsernameBtn;
-    private String userInput;
+    private String username;
+    private boolean isUsernameSet = false;
 
     public UserProfile(Context context) {
         this.context = context;
@@ -60,7 +61,8 @@ public class UserProfile {
         });
         loadProfilePicture();
 
-        String username = sharedPreferences.getString(USERNAME, "USERNAME");
+        username = sharedPreferences.getString(USERNAME, "USERNAME");
+        isUsernameSet = sharedPreferences.contains(USERNAME) ? true : false;
         usernameView.setText(username);
 
         changeUsernameBtn.setOnClickListener(new View.OnClickListener() {
@@ -94,11 +96,12 @@ public class UserProfile {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 // get input
-                userInput = input.getText().toString();
-                usernameView.setText(userInput);
+                username = input.getText().toString();
+                usernameView.setText(username);
+                isUsernameSet = true;
                 // save username
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putString(USERNAME, userInput);
+                editor.putString(USERNAME, username);
                 editor.apply();
             }
         }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -137,4 +140,7 @@ public class UserProfile {
         this.bitmap = bitmap;
         profilePictureView.setImageBitmap(bitmap);
     }
+
+    public boolean isUsernameSet() { return this.isUsernameSet; }
+    public String getUsername() { return this.username; }
 }

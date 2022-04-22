@@ -8,28 +8,24 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/tvTitulo"
+            android:id="@+id/address_on_pin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textStyle="bold"
+            android:textColor="@color/mainText"
             android:gravity="center"/>
 
-        <TextView
-            android:id="@+id/tvCuerpo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        <Button
+            android:id="@+id/direction_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/how_to_arrive" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:id="@+id/favourites_button"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/how_to_arrive"
-            android:id="@+id/direction_buttons"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/add_to_favorites"
-            android:id="@+id/favourites_button"/>
+            android:text="@string/add_to_favorites" />
 
     </LinearLayout>
 
